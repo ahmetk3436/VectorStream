@@ -1,0 +1,356 @@
+# NewMind AI Monitoring Queries
+# Bu dosya sistem izleme için optimize edilmiş PromQL sorguları içerir
+
+# =============================================================================
+# SİSTEM PERFORMANS METRİKLERİ
+# =============================================================================
+
+system_metrics:
+  # CPU Kullanımı
+  cpu_usage_percent:
+    query: '100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)'
+    description: 'Instance bazında CPU kullanım yüzdesi'
+    unit: 'percent'
+    
+  cpu_usage_by_core:
+    query: '100 - (avg by (instance, cpu) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)'
+    description: 'CPU core bazında kullanım yüzdesi'
+    unit: 'percent'
+    
+  # Bellek Kullanımı
+  memory_usage_percent:
+    query: '(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100'
+    description: 'Bellek kullanım yüzdesi'
+    unit: 'percent'
+    
+  memory_usage_bytes:
+    query: 'node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes'
+    description: 'Kullanılan bellek miktarı (bytes)'
+    unit: 'bytes'
+    
+  # Disk Kullanımı
+  disk_usage_percent:
+    query: '100 - ((node_filesystem_avail_bytes{mountpoint="/"} * 100) / node_filesystem_size_bytes{mountpoint="/"})'
+    description: 'Root filesystem disk kullanım yüzdesi'
+    unit: 'percent'
+    
+  disk_io_read_rate:
+    query: 'rate(node_disk_read_bytes_total[5m])'
+    description: 'Disk okuma hızı'
+    unit: 'bytes/sec'
+    
+  disk_io_write_rate:
+    query: 'rate(node_disk_written_bytes_total[5m])'
+    description: 'Disk yazma hızı'
+    unit: 'bytes/sec'
+    
+  # Network I/O
+  network_receive_rate:
+    query: 'rate(node_network_receive_bytes_total[5m])'
+    description: 'Network alma hızı'
+    unit: 'bytes/sec'
+    
+  network_transmit_rate:
+    query: 'rate(node_network_transmit_bytes_total[5m])'
+    description: 'Network gönderme hızı'
+    unit: 'bytes/sec'
+
+# =============================================================================
+# UYGULAMA METRİKLERİ
+# =============================================================================
+
+application_metrics:
+  # Mesaj İşleme
+  message_processing_rate:
+    query: 'rate(processed_messages_total[5m])'
+    description: 'Saniye başına işlenen mesaj sayısı'
+    unit: 'messages/sec'
+    
+  message_success_rate:
+    query: '(sum(rate(processed_messages_total{status="success"}[5m])) / sum(rate(processed_messages_total[5m]))) * 100'
+    description: 'Mesaj işleme başarı oranı'
+    unit: 'percent'
+    
+  message_error_rate:
+    query: 'rate(processed_messages_total{status="error"}[5m])'
+    description: 'Saniye başına hatalı mesaj sayısı'
+    unit: 'errors/sec'
+    
+  # İşlem Süreleri
+  processing_duration_avg:
+    query: 'avg(rate(processing_duration_seconds_sum[5m]) / rate(processing_duration_seconds_count[5m]))'
+    description: 'Ortalama işlem süresi'
+    unit: 'seconds'
+    
+  processing_duration_p95:
+    query: 'histogram_quantile(0.95, rate(processing_duration_seconds_bucket[5m]))'
+    description: '95. percentile işlem süresi'
+    unit: 'seconds'
+    
+  processing_duration_p99:
+    query: 'histogram_quantile(0.99, rate(processing_duration_seconds_bucket[5m]))'
+    description: '99. percentile işlem süresi'
+    unit: 'seconds'
+
+# =============================================================================
+# KAFKA METRİKLERİ
+# =============================================================================
+
+kafka_metrics:
+  # Bağlantı Durumu
+  kafka_connection_status:
+    query: 'kafka_connection_status'
+    description: 'Kafka bağlantı durumu (1=bağlı, 0=bağlı değil)'
+    unit: 'boolean'
+    
+  # Mesaj Metrikleri
+  kafka_messages_consumed_rate:
+    query: 'rate(kafka_messages_consumed_total[5m])'
+    description: 'Saniye başına tüketilen Kafka mesaj sayısı'
+    unit: 'messages/sec'
+    
+  kafka_messages_produced_rate:
+    query: 'rate(kafka_messages_produced_total[5m])'
+    description: 'Saniye başına üretilen Kafka mesaj sayısı'
+    unit: 'messages/sec'
+    
+  # Consumer Lag
+  kafka_consumer_lag:
+    query: 'kafka_consumer_lag'
+    description: 'Kafka consumer lag'
+    unit: 'messages'
+    
+  kafka_consumer_lag_by_topic:
+    query: 'kafka_consumer_lag_by_topic'
+    description: 'Topic bazında consumer lag'
+    unit: 'messages'
+    
+  # Hata Metrikleri
+  kafka_connection_errors:
+    query: 'rate(kafka_connection_errors_total[5m])'
+    description: 'Saniye başına Kafka bağlantı hatası'
+    unit: 'errors/sec'
+    
+  kafka_processing_errors:
+    query: 'rate(kafka_processing_errors_total[5m])'
+    description: 'Saniye başına Kafka işleme hatası'
+    unit: 'errors/sec'
+
+# =============================================================================
+# QDRANT METRİKLERİ
+# =============================================================================
+
+qdrant_metrics:
+  # Bağlantı Durumu
+  qdrant_connection_status:
+    query: 'qdrant_connection_status'
+    description: 'Qdrant bağlantı durumu (1=bağlı, 0=bağlı değil)'
+    unit: 'boolean'
+    
+  # Operasyon Metrikleri
+  qdrant_operations_rate:
+    query: 'rate(qdrant_operations_total[5m])'
+    description: 'Saniye başına Qdrant operasyon sayısı'
+    unit: 'operations/sec'
+    
+  qdrant_operations_success_rate:
+    query: '(sum(rate(qdrant_operations_total{status="success"}[5m])) / sum(rate(qdrant_operations_total[5m]))) * 100'
+    description: 'Qdrant operasyon başarı oranı'
+    unit: 'percent'
+    
+  # Yanıt Süreleri
+  qdrant_response_time_avg:
+    query: 'avg(rate(qdrant_operations_duration_seconds_sum[5m]) / rate(qdrant_operations_duration_seconds_count[5m]))'
+    description: 'Ortalama Qdrant yanıt süresi'
+    unit: 'seconds'
+    
+  qdrant_response_time_p95:
+    query: 'histogram_quantile(0.95, rate(qdrant_operations_duration_seconds_bucket[5m]))'
+    description: '95. percentile Qdrant yanıt süresi'
+    unit: 'seconds'
+    
+  # Arama Metrikleri
+  qdrant_search_rate:
+    query: 'rate(qdrant_search_operations_total[5m])'
+    description: 'Saniye başına arama operasyonu'
+    unit: 'searches/sec'
+    
+  qdrant_search_results_avg:
+    query: 'avg(qdrant_search_results_count)'
+    description: 'Ortalama arama sonuç sayısı'
+    unit: 'results'
+
+# =============================================================================
+# EMBEDDING METRİKLERİ
+# =============================================================================
+
+embedding_metrics:
+  # İşlem Metrikleri
+  embedding_generation_rate:
+    query: 'rate(embedding_operations_total[5m])'
+    description: 'Saniye başına embedding üretim sayısı'
+    unit: 'embeddings/sec'
+    
+  embedding_generation_duration_avg:
+    query: 'avg(rate(embedding_generation_duration_seconds_sum[5m]) / rate(embedding_generation_duration_seconds_count[5m]))'
+    description: 'Ortalama embedding üretim süresi'
+    unit: 'seconds'
+    
+  embedding_batch_size_avg:
+    query: 'avg(embedding_batch_size)'
+    description: 'Ortalama embedding batch boyutu'
+    unit: 'items'
+    
+  # Kalite Metrikleri
+  embedding_quality_score:
+    query: 'avg(embedding_quality_score)'
+    description: 'Ortalama embedding kalite skoru'
+    unit: 'score'
+    
+  # GPU Metrikleri (RAPIDS)
+  gpu_utilization:
+    query: 'gpu_utilization_percent'
+    description: 'GPU kullanım yüzdesi'
+    unit: 'percent'
+    
+  gpu_memory_usage:
+    query: 'gpu_memory_usage_bytes'
+    description: 'GPU bellek kullanımı'
+    unit: 'bytes'
+
+# =============================================================================
+# HATA VE GÜVENİLİRLİK METRİKLERİ
+# =============================================================================
+
+error_metrics:
+  # Genel Hata Oranları
+  total_error_rate:
+    query: 'rate(error_total[5m])'
+    description: 'Toplam hata oranı'
+    unit: 'errors/sec'
+    
+  error_rate_by_type:
+    query: 'rate(error_total[5m]) by (error_type)'
+    description: 'Hata türü bazında hata oranı'
+    unit: 'errors/sec'
+    
+  # Circuit Breaker
+  circuit_breaker_open_count:
+    query: 'sum(circuit_breaker_state == 1)'
+    description: 'Açık durumda olan circuit breaker sayısı'
+    unit: 'count'
+    
+  circuit_breaker_trip_rate:
+    query: 'rate(circuit_breaker_trips_total[5m])'
+    description: 'Circuit breaker açılma oranı'
+    unit: 'trips/sec'
+    
+  # Dead Letter Queue
+  dlq_message_count:
+    query: 'dlq_messages_total'
+    description: 'DLQ\'daki toplam mesaj sayısı'
+    unit: 'messages'
+    
+  dlq_message_rate:
+    query: 'rate(dlq_messages_total[5m])'
+    description: 'DLQ\'ya gönderilen mesaj oranı'
+    unit: 'messages/sec'
+
+# =============================================================================
+# KUBERNETES METRİKLERİ
+# =============================================================================
+
+kubernetes_metrics:
+  # Pod Metrikleri
+  pod_restart_count:
+    query: 'increase(kube_pod_container_status_restarts_total[1h])'
+    description: 'Son 1 saatteki pod restart sayısı'
+    unit: 'restarts'
+    
+  pod_cpu_usage:
+    query: 'rate(container_cpu_usage_seconds_total{container!="POD",container!=""}[5m])'
+    description: 'Pod CPU kullanımı'
+    unit: 'cores'
+    
+  pod_memory_usage:
+    query: 'container_memory_working_set_bytes{container!="POD",container!=""}'
+    description: 'Pod bellek kullanımı'
+    unit: 'bytes'
+    
+  # Node Metrikleri
+  node_ready_status:
+    query: 'kube_node_status_condition{condition="Ready",status="true"}'
+    description: 'Node hazır durumu'
+    unit: 'boolean'
+    
+  # Persistent Volume
+  pv_usage_percent:
+    query: '(kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) * 100'
+    description: 'Persistent Volume kullanım yüzdesi'
+    unit: 'percent'
+
+# =============================================================================
+# PERFORMANS ANALİZİ SORULARI
+# =============================================================================
+
+performance_analysis:
+  # Throughput Analizi
+  hourly_message_throughput:
+    query: 'sum(increase(processed_messages_total[1h]))'
+    description: 'Saatlik mesaj throughput'
+    unit: 'messages/hour'
+    
+  daily_message_throughput:
+    query: 'sum(increase(processed_messages_total[24h]))'
+    description: 'Günlük mesaj throughput'
+    unit: 'messages/day'
+    
+  # Latency Analizi
+  latency_trend_1h:
+    query: 'avg_over_time(histogram_quantile(0.95, rate(processing_duration_seconds_bucket[5m]))[1h:5m])'
+    description: 'Son 1 saatteki latency trendi'
+    unit: 'seconds'
+    
+  # Kaynak Kullanım Trendi
+  cpu_trend_24h:
+    query: 'avg_over_time((100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100))[24h:1h])'
+    description: 'Son 24 saatteki CPU kullanım trendi'
+    unit: 'percent'
+    
+  memory_trend_24h:
+    query: 'avg_over_time(((1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100)[24h:1h])'
+    description: 'Son 24 saatteki bellek kullanım trendi'
+    unit: 'percent'
+
+# =============================================================================
+# KAPASETE PLANLAMA SORULARI
+# =============================================================================
+
+capacity_planning:
+  # Büyüme Oranları
+  message_growth_rate_7d:
+    query: 'rate(processed_messages_total[7d])'
+    description: '7 günlük mesaj büyüme oranı'
+    unit: 'messages/sec'
+    
+  storage_growth_rate_7d:
+    query: 'rate(node_filesystem_size_bytes[7d])'
+    description: '7 günlük depolama büyüme oranı'
+    unit: 'bytes/sec'
+    
+  # Kapasite Projeksiyonları
+  projected_disk_full_days:
+    query: '(node_filesystem_avail_bytes / rate(node_filesystem_size_bytes[7d])) / 86400'
+    description: 'Diskin dolacağı tahmini gün sayısı'
+    unit: 'days'
+    
+  # Peak Kullanım
+  peak_cpu_usage_24h:
+    query: 'max_over_time((100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100))[24h:5m])'
+    description: 'Son 24 saatteki peak CPU kullanımı'
+    unit: 'percent'
+    
+  peak_memory_usage_24h:
+    query: 'max_over_time(((1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100)[24h:5m])'
+    description: 'Son 24 saatteki peak bellek kullanımı'
+    unit: 'percent'

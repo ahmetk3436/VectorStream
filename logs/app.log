@@ -131,3 +131,6 @@
 2025-07-13 02:44:33 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for qdrant
 2025-07-13 02:44:33 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for qdrant
 2025-07-13 02:44:36 | INFO | tests.unit.test_chaos_engineering:run_network_partition_test:222 | Starting network partition test
+2025-07-13 02:44:46 | INFO | tests.unit.test_chaos_engineering:run_resource_exhaustion_test:242 | Starting resource exhaustion test
+2025-07-13 02:44:46 | INFO | tests.unit.test_chaos_engineering:inject_memory_pressure:74 | Injecting memory pressure: 50MB
+2025-07-13 02:44:46 | INFO | tests.unit.test_chaos_engineering:inject_cpu_load:81 | Injecting CPU load for 1s

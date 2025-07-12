@@ -1,0 +1,191 @@
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'alerts@newmind-ai.com'
+  smtp_auth_username: 'alerts@newmind-ai.com'
+  smtp_auth_password: 'your-smtp-password'
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+
+route:
+  group_by: ['alertname', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'web.hook'
+  routes:
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 5s
+      repeat_interval: 30m
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s
+      repeat_interval: 2h
+    - match:
+        service: kafka
+      receiver: 'kafka-alerts'
+    - match:
+        service: qdrant
+      receiver: 'qdrant-alerts'
+    - match:
+        service: processing
+      receiver: 'processing-alerts'
+
+receivers:
+  - name: 'web.hook'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+
+  - name: 'critical-alerts'
+    email_configs:
+      - to: 'admin@newmind-ai.com'
+        subject: '[KRİTİK] NewMind AI Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          KRİTİK UYARI!
+          
+          Alert: {{ .GroupLabels.alertname }}
+          Servis: {{ .GroupLabels.service }}
+          Zaman: {{ .CommonAnnotations.timestamp }}
+          
+          Detaylar:
+          {{ range .Alerts }}
+          - {{ .Annotations.summary }}
+            {{ .Annotations.description }}
+            Durum: {{ .Status }}
+            Başlangıç: {{ .StartsAt }}
+          {{ end }}
+          
+          Grafana Dashboard: http://grafana.newmind-ai.com/d/newmind-ai-overview
+        headers:
+          Priority: 'high'
+    slack_configs:
+      - channel: '#alerts-critical'
+        title: 'KRİTİK UYARI: {{ .GroupLabels.alertname }}'
+        text: |
+          🚨 *KRİTİK UYARI* 🚨
+          
+          *Alert:* {{ .GroupLabels.alertname }}
+          *Servis:* {{ .GroupLabels.service }}
+          
+          {{ range .Alerts }}
+          *Özet:* {{ .Annotations.summary }}
+          *Açıklama:* {{ .Annotations.description }}
+          *Durum:* {{ .Status }}
+          {{ end }}
+        send_resolved: true
+        color: 'danger'
+
+  - name: 'warning-alerts'
+    email_configs:
+      - to: 'team@newmind-ai.com'
+        subject: '[UYARI] NewMind AI Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          UYARI!
+          
+          Alert: {{ .GroupLabels.alertname }}
+          Servis: {{ .GroupLabels.service }}
+          
+          {{ range .Alerts }}
+          - {{ .Annotations.summary }}
+            {{ .Annotations.description }}
+          {{ end }}
+    slack_configs:
+      - channel: '#alerts-warning'
+        title: 'UYARI: {{ .GroupLabels.alertname }}'
+        text: |
+          ⚠️ *UYARI* ⚠️
+          
+          *Alert:* {{ .GroupLabels.alertname }}
+          *Servis:* {{ .GroupLabels.service }}
+          
+          {{ range .Alerts }}
+          *Özet:* {{ .Annotations.summary }}
+          {{ end }}
+        color: 'warning'
+
+  - name: 'kafka-alerts'
+    email_configs:
+      - to: 'kafka-team@newmind-ai.com'
+        subject: '[KAFKA] NewMind AI Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          KAFKA UYARISI!
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Açıklama: {{ .Annotations.description }}
+          Instance: {{ .Labels.instance }}
+          {{ end }}
+    slack_configs:
+      - channel: '#kafka-alerts'
+        title: 'Kafka Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          🔴 *Kafka Problemi*
+          
+          {{ range .Alerts }}
+          {{ .Annotations.summary }}
+          {{ end }}
+        color: 'danger'
+
+  - name: 'qdrant-alerts'
+    email_configs:
+      - to: 'qdrant-team@newmind-ai.com'
+        subject: '[QDRANT] NewMind AI Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          QDRANT UYARISI!
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Açıklama: {{ .Annotations.description }}
+          Instance: {{ .Labels.instance }}
+          {{ end }}
+    slack_configs:
+      - channel: '#qdrant-alerts'
+        title: 'Qdrant Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          🟡 *Qdrant Problemi*
+          
+          {{ range .Alerts }}
+          {{ .Annotations.summary }}
+          {{ end }}
+        color: 'warning'
+
+  - name: 'processing-alerts'
+    email_configs:
+      - to: 'processing-team@newmind-ai.com'
+        subject: '[İŞLEME] NewMind AI Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          İŞLEME UYARISI!
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Açıklama: {{ .Annotations.description }}
+          Metrik Değeri: {{ .Labels.value }}
+          {{ end }}
+    slack_configs:
+      - channel: '#processing-alerts'
+        title: 'Processing Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          ⚙️ *İşleme Problemi*
+          
+          {{ range .Alerts }}
+          {{ .Annotations.summary }}
+          {{ end }}
+        color: 'warning'
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'service']
+  
+  - source_match:
+      alertname: 'SystemDown'
+    target_match_re:
+      alertname: '.*'
+    equal: ['instance']
+
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
