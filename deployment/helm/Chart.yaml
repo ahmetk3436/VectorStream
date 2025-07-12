@@ -1,0 +1,36 @@
+apiVersion: v2
+name: newmind-ai
+description: A Helm chart for NewMind AI - Intelligent data processing system with Kafka and Qdrant
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+home: https://github.com/newmind-ai/newmind-ai
+sources:
+  - https://github.com/newmind-ai/newmind-ai
+maintainers:
+  - name: NewMind AI Team
+    email: team@newmind-ai.com
+keywords:
+  - ai
+  - kafka
+  - qdrant
+  - vector-database
+  - data-processing
+  - machine-learning
+dependencies:
+  - name: kafka
+    version: "22.1.5"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: kafka.enabled
+  - name: qdrant
+    version: "0.7.0"
+    repository: "https://qdrant.github.io/qdrant-helm"
+    condition: qdrant.enabled
+  - name: prometheus
+    version: "23.1.0"
+    repository: "https://prometheus-community.github.io/helm-charts"
+    condition: monitoring.prometheus.enabled
+  - name: grafana
+    version: "6.58.7"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: monitoring.grafana.enabled

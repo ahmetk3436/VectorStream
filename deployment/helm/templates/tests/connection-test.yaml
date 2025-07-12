@@ -1,0 +1,30 @@
+{{- if .Values.tests.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "newmind-ai.fullname" . }}-test-connection"
+  labels:
+    {{- include "newmind-ai.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: wget
+      image: "{{ .Values.tests.image.repository }}:{{ .Values.tests.image.tag }}"
+      imagePullPolicy: {{ .Values.tests.image.pullPolicy }}
+      command: ['wget']
+      args: ['{{ include "newmind-ai.fullname" . }}:{{ .Values.service.port }}/health']
+    - name: health-check
+      image: "{{ .Values.tests.image.repository }}:{{ .Values.tests.image.tag }}"
+      imagePullPolicy: {{ .Values.tests.image.pullPolicy }}
+      command: ['wget']
+      args: ['{{ include "newmind-ai.fullname" . }}:{{ .Values.env.HEALTH_CHECK_PORT | default 8080 }}/health/live']
+    - name: metrics-check
+      image: "{{ .Values.tests.image.repository }}:{{ .Values.tests.image.tag }}"
+      imagePullPolicy: {{ .Values.tests.image.pullPolicy }}
+      command: ['wget']
+      args: ['{{ include "newmind-ai.fullname" . }}:{{ .Values.env.METRICS_PORT | default 9090 }}/metrics']
+{{- end }}

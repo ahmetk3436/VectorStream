@@ -1,0 +1,1 @@
+"""NewMind AI - Main package."""
