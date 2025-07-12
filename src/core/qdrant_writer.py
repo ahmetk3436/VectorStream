@@ -1,7 +1,7 @@
 import asyncio
 from typing import List, Dict, Any
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
+from qdrant_client.models import Distance, VectorParams, PointStruct, QueryRequest
 from loguru import logger
 import uuid
 
@@ -64,12 +64,12 @@ class QdrantWriter:
     async def search_similar(self, query_vector: List[float], limit: int = 5):
         """Benzer vektörleri ara"""
         try:
-            results = self.client.search(
+            results = self.client.query_points(
                 collection_name=self.collection_name,
-                query_vector=query_vector,
+                query=query_vector,
                 limit=limit
             )
-            return results
+            return results.points
         except Exception as e:
             logger.error(f"Arama hatası: {e}")
             return []

@@ -151,7 +151,9 @@ class TestQdrantWriter(unittest.TestCase):
         
         # Mock arama sonuçları
         mock_results = [MagicMock(), MagicMock()]
-        mock_client_instance.search.return_value = mock_results
+        mock_query_response = MagicMock()
+        mock_query_response.points = mock_results
+        mock_client_instance.query_points.return_value = mock_query_response
         
         writer = QdrantWriter(self.qdrant_config)
         
@@ -159,7 +161,7 @@ class TestQdrantWriter(unittest.TestCase):
         results = self.run_async_test(writer.search_similar(query_vector, limit=5))
         
         self.assertEqual(results, mock_results)
-        mock_client_instance.search.assert_called_once()
+        mock_client_instance.query_points.assert_called_once()
     
     @patch('src.core.qdrant_writer.QdrantClient')
     def test_search_similar_empty_results(self, mock_client_class):
@@ -168,7 +170,9 @@ class TestQdrantWriter(unittest.TestCase):
         mock_client_class.return_value = mock_client_instance
         
         # Mock empty search results
-        mock_client_instance.search.return_value = []
+        mock_query_response = MagicMock()
+        mock_query_response.points = []
+        mock_client_instance.query_points.return_value = mock_query_response
         
         writer = QdrantWriter(self.qdrant_config)
         
@@ -184,7 +188,7 @@ class TestQdrantWriter(unittest.TestCase):
         """Arama hatası yönetimi testi"""
         mock_client_instance = MagicMock()
         mock_client_class.return_value = mock_client_instance
-        mock_client_instance.search.side_effect = Exception("Search error")
+        mock_client_instance.query_points.side_effect = Exception("Search error")
         
         writer = QdrantWriter(self.qdrant_config)
         
