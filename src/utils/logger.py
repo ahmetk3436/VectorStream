@@ -1,37 +1,29 @@
-import logging
+from loguru import logger
 import sys
-from typing import Optional
+from pathlib import Path
 
-class Logger:
-    _instance = None
+def setup_logger(config):
+    """Logger'ı yapılandır"""
+    # Mevcut logger'ları temizle
+    logger.remove()
     
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._setup_logger()
-        return cls._instance
+    # Console logger
+    logger.add(
+        sys.stdout,
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}",
+        level=config.get('level', 'INFO')
+    )
     
-    def _setup_logger(self):
-        self.logger = logging.getLogger('newmind_ai')
-        self.logger.setLevel(logging.INFO)
-        
-        # Console handler
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(logging.INFO)
-        
-        # File handler
-        file_handler = logging.FileHandler('logs/app.log')
-        file_handler.setLevel(logging.ERROR)
-        
-        # Formatter
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
-        console_handler.setFormatter(formatter)
-        file_handler.setFormatter(formatter)
-        
-        self.logger.addHandler(console_handler)
-        self.logger.addHandler(file_handler)
+    # File logger
+    log_path = Path("logs")
+    log_path.mkdir(exist_ok=True)
     
-    def get_logger(self):
-        return self.logger
+    logger.add(
+        log_path / "app.log",
+        rotation="10 MB",
+        retention="7 days",
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}",
+        level=config.get('level', 'INFO')
+    )
+    
+    return logger

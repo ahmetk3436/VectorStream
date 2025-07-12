@@ -1,0 +1,27 @@
+kafka:
+  bootstrap_servers: "localhost:9092"
+  topic: "raw_data"
+  group_id: "embedding_processor"
+  auto_offset_reset: "latest"
+  batch_size: 100
+
+qdrant:
+  host: "localhost"
+  port: 6333
+  collection_name: "embeddings"
+  vector_size: 384
+  distance: "Cosine"
+
+spark:
+  app_name: "NewMind-AI-Processor"
+  master: "spark://localhost:7077"
+  executor_memory: "2g"
+  driver_memory: "1g"
+  
+logging:
+  level: "INFO"
+  format: "{time} | {level} | {message}"
+
+monitoring:
+  prometheus_port: 9090
+  health_check_interval: 30

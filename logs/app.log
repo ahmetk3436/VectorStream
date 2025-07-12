@@ -1,0 +1,50 @@
+2025-07-12 18:41:47 | INFO | __main__:<module>:6 | Logger test başarılı!
+2025-07-12 18:41:47 | WARNING | __main__:<module>:7 | Bu bir uyarı mesajı
+2025-07-12 18:41:47 | ERROR | __main__:<module>:8 | Bu bir hata mesajı
+2025-07-12 18:51:55 | INFO | src.core.kafka_consumer:start_consuming:28 | Kafka consumer başlatıldı. Topic: raw_data
+2025-07-12 18:56:28 | INFO | src.core.kafka_consumer:close:56 | Kafka consumer kapatıldı
+2025-07-12 18:56:30 | INFO | src.core.kafka_consumer:start_consuming:28 | Kafka consumer başlatıldı. Topic: raw_data
+2025-07-12 18:56:44 | INFO | src.core.kafka_consumer:close:56 | Kafka consumer kapatıldı
+2025-07-12 18:56:52 | INFO | src.core.kafka_consumer:start_consuming:28 | Kafka consumer başlatıldı. Topic: raw_data
+2025-07-12 18:59:14 | INFO | src.core.kafka_consumer:close:56 | Kafka consumer kapatıldı
+2025-07-12 19:02:44 | INFO | src.core.kafka_consumer:start_consuming:28 | Kafka consumer başlatıldı. Topic: raw_data
+2025-07-12 19:03:13 | INFO | src.core.kafka_consumer:close:67 | Kafka consumer kapatıldı
+2025-07-12 19:03:14 | INFO | src.core.kafka_consumer:start_consuming:28 | Kafka consumer başlatıldı. Topic: raw_data
+2025-07-12 19:03:23 | ERROR | src.core.kafka_consumer:start_consuming:50 | Mesaj işleme hatası: the JSON object must be str, bytes or bytearray, not NoneType
+2025-07-12 19:03:43 | ERROR | src.core.kafka_consumer:start_consuming:48 | JSON parse hatası: Expecting value: line 1 column 1 (char 0)
+2025-07-12 19:04:02 | INFO | src.core.kafka_consumer:start_consuming:41 | Mesaj alındı: {'test_vectors': [{'id': 'vec_001', 'vector': [0.1, 0.2, 0.3, 0.4, 0.5], 'metadata': {'text': 'test document', 'category': 'technology'}}, {'id': 'vec_002', 'vector': [0.6, 0.7, 0.8, 0.9, 1.0], 'metadata': {'text': 'another test document', 'category': 'science'}}]}
+2025-07-12 19:05:32 | INFO | src.core.kafka_consumer:start_consuming:41 | Mesaj alındı: {'id': 'msg_001', 'text': 'Bu bir test mesajıdır', 'timestamp': '2025-07-12T19:05:32.675585', 'category': 'test'}
+2025-07-12 19:05:33 | INFO | src.core.kafka_consumer:start_consuming:41 | Mesaj alındı: {'id': 'msg_002', 'text': 'İkinci test mesajı', 'timestamp': '2025-07-12T19:05:32.675592', 'category': 'demo'}
+2025-07-12 19:05:34 | INFO | src.core.kafka_consumer:start_consuming:41 | Mesaj alındı: {'id': 'msg_003', 'text': 'Üçüncü test mesajı - embedding için', 'timestamp': '2025-07-12T19:05:32.675593', 'category': 'embedding'}
+2025-07-12 19:05:55 | INFO | src.core.kafka_consumer:close:67 | Kafka consumer kapatıldı
+2025-07-12 19:08:03 | INFO | src.core.qdrant_writer:initialize_collection:32 | Koleksiyon oluşturuldu: embeddings
+2025-07-12 19:08:04 | INFO | src.core.qdrant_writer:write_embeddings:57 | ✅ 2 embedding yazıldı
+2025-07-12 19:11:16 | INFO | __main__:test_logger:66 | ✅ Logger test başarılı!
+2025-07-12 19:11:16 | WARNING | __main__:test_logger:67 | ⚠️ Bu bir uyarı mesajı
+2025-07-12 19:11:16 | ERROR | __main__:test_logger:68 | ❌ Bu bir hata mesajı (test amaçlı)
+2025-07-12 19:11:17 | INFO | src.core.qdrant_writer:initialize_collection:34 | Koleksiyon zaten mevcut: embeddings
+2025-07-12 19:11:17 | INFO | src.core.qdrant_writer:write_embeddings:57 | ✅ 1 embedding yazıldı
+2025-07-12 19:12:06 | INFO | __main__:test_logger:66 | ✅ Logger test başarılı!
+2025-07-12 19:12:06 | WARNING | __main__:test_logger:67 | ⚠️ Bu bir uyarı mesajı
+2025-07-12 19:12:06 | ERROR | __main__:test_logger:68 | ❌ Bu bir hata mesajı (test amaçlı)
+2025-07-12 19:12:07 | INFO | src.core.qdrant_writer:initialize_collection:34 | Koleksiyon zaten mevcut: embeddings
+2025-07-12 19:12:07 | INFO | src.core.qdrant_writer:write_embeddings:57 | ✅ 1 embedding yazıldı
+2025-07-12 19:13:08 | INFO | __main__:start:75 | 🚀 NewMind-AI başlatılıyor...
+2025-07-12 19:13:08 | INFO | core.qdrant_writer:initialize_collection:34 | Koleksiyon zaten mevcut: embeddings
+2025-07-12 19:13:08 | INFO | core.kafka_consumer:start_consuming:35 | Kafka consumer başlatıldı. Topic: raw_data
+2025-07-12 19:13:19 | INFO | __main__:test_logger:66 | ✅ Logger test başarılı!
+2025-07-12 19:13:19 | WARNING | __main__:test_logger:67 | ⚠️ Bu bir uyarı mesajı
+2025-07-12 19:13:19 | ERROR | __main__:test_logger:68 | ❌ Bu bir hata mesajı (test amaçlı)
+2025-07-12 19:13:20 | INFO | src.core.qdrant_writer:initialize_collection:34 | Koleksiyon zaten mevcut: embeddings
+2025-07-12 19:13:20 | INFO | src.core.qdrant_writer:write_embeddings:57 | ✅ 1 embedding yazıldı
+2025-07-12 19:15:24 | INFO | core.kafka_consumer:start_consuming:44 | Mesaj alındı: {'id': 'test_001', 'content': 'Bu progressive test mesajıdır', 'timestamp': '2024-01-15T10:30:00Z', 'metadata': {'source': 'progressive_test', 'priority': 'high'}}
+2025-07-12 19:15:24 | INFO | __main__:process_message:41 | Mesaj işleniyor: {'id': 'test_001', 'content': 'Bu progressive test mesajıdır', 'timestamp': '2024-01-15T10:30:00Z', 'metadata': {'source': 'progressive_test', 'priority': 'high'}}
+2025-07-12 19:15:24 | INFO | core.qdrant_writer:write_embeddings:57 | ✅ 1 embedding yazıldı
+2025-07-12 19:15:24 | INFO | __main__:process_message:60 | ✅ Mesaj başarıyla işlendi: test_001
+2025-07-12 19:15:32 | INFO | __main__:start:75 | 🚀 NewMind-AI başlatılıyor...
+2025-07-12 19:15:32 | INFO | core.qdrant_writer:initialize_collection:34 | Koleksiyon zaten mevcut: embeddings
+2025-07-12 19:15:32 | INFO | core.kafka_consumer:start_consuming:35 | Kafka consumer başlatıldı. Topic: raw_data
+2025-07-12 19:15:49 | INFO | core.kafka_consumer:start_consuming:44 | Mesaj alındı: {'id': 'test_001', 'content': 'Bu progressive test mesajıdır', 'timestamp': '2024-01-15T10:30:00Z', 'metadata': {'source': 'progressive_test', 'priority': 'high'}}
+2025-07-12 19:15:49 | INFO | __main__:process_message:41 | Mesaj işleniyor: {'id': 'test_001', 'content': 'Bu progressive test mesajıdır', 'timestamp': '2024-01-15T10:30:00Z', 'metadata': {'source': 'progressive_test', 'priority': 'high'}}
+2025-07-12 19:15:49 | INFO | core.qdrant_writer:write_embeddings:57 | ✅ 1 embedding yazıldı
+2025-07-12 19:15:49 | INFO | __main__:process_message:60 | ✅ Mesaj başarıyla işlendi: test_001
