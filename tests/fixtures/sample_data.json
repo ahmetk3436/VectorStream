@@ -1,0 +1,22 @@
+{
+  "messages": [
+    {
+      "id": "msg_001",
+      "content": "Bu bir test mesajıdır",
+      "timestamp": "2024-01-15T10:30:00Z",
+      "metadata": {
+        "source": "test",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "msg_002", 
+      "content": "Machine learning test data",
+      "timestamp": "2024-01-15T10:31:00Z",
+      "metadata": {
+        "source": "ml_pipeline",
+        "priority": "medium"
+      }
+    }
+  ]
+}

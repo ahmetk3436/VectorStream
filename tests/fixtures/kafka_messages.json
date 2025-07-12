@@ -1,0 +1,22 @@
+{
+  "valid_messages": [
+    {
+      "key": "user_123",
+      "value": {
+        "user_id": 123,
+        "action": "login",
+        "timestamp": "2024-01-15T10:30:00Z"
+      },
+      "headers": {
+        "content-type": "application/json"
+      }
+    }
+  ],
+  "invalid_messages": [
+    {
+      "key": "invalid_key",
+      "value": "malformed json{",
+      "headers": {}
+    }
+  ]
+}

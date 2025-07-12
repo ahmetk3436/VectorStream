@@ -1,0 +1,13 @@
+kafka:
+  bootstrap_servers: "localhost:9092"
+  topic: "test_topic"
+  group_id: "test_group"
+
+qdrant:
+  host: "localhost"
+  port: 6333
+  collection_name: "test_collection"
+
+spark:
+  app_name: "test_app"
+  master: "local[2]"

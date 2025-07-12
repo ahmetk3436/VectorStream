@@ -1,0 +1,13 @@
+{
+  "load_test": {
+    "message_count": 10000,
+    "batch_size": 100,
+    "expected_throughput": 1000,
+    "max_latency_ms": 100
+  },
+  "stress_test": {
+    "message_count": 100000,
+    "concurrent_consumers": 5,
+    "expected_throughput": 5000
+  }
+}

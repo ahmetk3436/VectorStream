@@ -1,0 +1,21 @@
+{
+  "connection_errors": [
+    {
+      "scenario": "kafka_unavailable",
+      "error_type": "ConnectionError",
+      "expected_retry": true
+    },
+    {
+      "scenario": "qdrant_timeout",
+      "error_type": "TimeoutError", 
+      "expected_retry": true
+    }
+  ],
+  "data_errors": [
+    {
+      "scenario": "invalid_json",
+      "input": "malformed{json",
+      "expected_error": "JSONDecodeError"
+    }
+  ]
+}
