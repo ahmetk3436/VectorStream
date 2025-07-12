@@ -12,6 +12,7 @@ sys.path.insert(0, str(project_root))
 
 from config.kafka_config import KafkaConfig
 from utils.circuit_breaker import CircuitBreakerConfig, circuit_breaker_manager, CircuitBreakerError
+from utils.dead_letter_queue import get_dlq, FailureReason
 
 class KafkaConsumer:
     def __init__(self, config: KafkaConfig):
@@ -29,6 +30,9 @@ class KafkaConsumer:
                 timeout=10.0
             )
         )
+        
+        # DLQ instance'ını al
+        self.dlq = get_dlq()
         
     def set_message_handler(self, handler: Callable[[Dict[str, Any]], None]):
         """Mesaj işleyici fonksiyonu ayarla"""
@@ -53,6 +57,17 @@ class KafkaConsumer:
                             
                     except CircuitBreakerError as e:
                         logger.error(f"Circuit breaker hatası: {e}")
+                        # Circuit breaker açık olduğunda DLQ'ya gönder
+                        await self.dlq.send_to_dlq(
+                            original_topic=message.topic,
+                            original_partition=message.partition,
+                            original_offset=message.offset,
+                            original_key=message.key.decode('utf-8') if message.key else None,
+                            original_value=message.value.decode('utf-8'),
+                            failure_reason=FailureReason.CIRCUIT_BREAKER_OPEN,
+                            error_message=str(e),
+                            retry_count=0
+                        )
                         # Circuit breaker açıksa kısa süre bekle
                         await asyncio.sleep(1)
                     except Exception as e:
@@ -77,13 +92,44 @@ class KafkaConsumer:
     
     async def _process_message(self, message):
         """Tek mesajı işle"""
-        # Mesajı JSON olarak parse et
-        data = json.loads(message.value)
-        logger.info(f"Mesaj alındı: {data}")
-        
-        # Mesaj işleyiciye gönder
-        if self.message_handler:
-            await self.message_handler(data)
+        try:
+            # Mesajı JSON olarak parse et
+            try:
+                data = json.loads(message.value)
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON parse hatası: {e}")
+                # DLQ'ya gönder
+                await self.dlq.send_to_dlq(
+                    original_topic=message.topic,
+                    original_partition=message.partition,
+                    original_offset=message.offset,
+                    original_key=message.key.decode('utf-8') if message.key else None,
+                    original_value=message.value.decode('utf-8'),
+                    failure_reason=FailureReason.VALIDATION_ERROR,
+                    error_message=f"JSON parse hatası: {str(e)}",
+                    retry_count=0
+                )
+                return
+            
+            logger.info(f"Mesaj alındı: {data}")
+            
+            # Mesaj işleyiciye gönder
+            if self.message_handler:
+                await self.message_handler(data)
+                
+        except Exception as e:
+            logger.error(f"Mesaj işleme hatası: {e}")
+            # DLQ'ya gönder
+            await self.dlq.send_to_dlq(
+                original_topic=message.topic,
+                original_partition=message.partition,
+                original_offset=message.offset,
+                original_key=message.key.decode('utf-8') if message.key else None,
+                original_value=message.value.decode('utf-8'),
+                failure_reason=FailureReason.PROCESSING_ERROR,
+                error_message=str(e),
+                retry_count=0
+            )
             
     async def close(self):
         """Consumer'ı kapat"""
