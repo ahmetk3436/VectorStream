@@ -2,12 +2,61 @@
   "load_test": {
     "message_count": 10000,
     "batch_size": 100,
+    "concurrent_workers": 5,
     "expected_throughput": 1000,
-    "max_latency_ms": 100
+    "max_latency_ms": 100,
+    "test_duration_seconds": 60
   },
   "stress_test": {
     "message_count": 100000,
-    "concurrent_consumers": 5,
-    "expected_throughput": 5000
+    "batch_size": 200,
+    "concurrent_workers": 10,
+    "expected_throughput": 5000,
+    "max_latency_ms": 500,
+    "test_duration_seconds": 300
+  },
+  "latency_test": {
+    "message_count": 1000,
+    "batch_size": 10,
+    "concurrent_workers": 2,
+    "expected_throughput": 100,
+    "max_latency_ms": 50,
+    "test_duration_seconds": 30
+  },
+  "scalability_test": {
+    "message_count": 5000,
+    "batch_size": 100,
+    "worker_counts": [1, 2, 4, 8, 16],
+    "expected_throughput_per_worker": 200,
+    "max_latency_ms": 200,
+    "test_duration_seconds": 120
+  },
+  "endurance_test": {
+    "message_count": 50000,
+    "batch_size": 150,
+    "concurrent_workers": 8,
+    "expected_throughput": 2000,
+    "max_latency_ms": 300,
+    "test_duration_seconds": 1800
+  },
+  "resource_limits": {
+    "max_cpu_usage_percent": 85,
+    "max_memory_usage_percent": 80,
+    "max_disk_usage_percent": 90,
+    "min_available_memory_gb": 2
+  },
+  "performance_benchmarks": {
+    "embedding_generation": {
+      "target_latency_ms": 100,
+      "target_throughput_per_sec": 500
+    },
+    "kafka_processing": {
+      "target_latency_ms": 50,
+      "target_throughput_per_sec": 1000
+    },
+    "qdrant_writing": {
+      "target_latency_ms": 200,
+      "target_throughput_per_sec": 300
+    }
   }
 }

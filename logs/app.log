@@ -48,3 +48,30 @@
 2025-07-12 19:15:49 | INFO | __main__:process_message:41 | Mesaj işleniyor: {'id': 'test_001', 'content': 'Bu progressive test mesajıdır', 'timestamp': '2024-01-15T10:30:00Z', 'metadata': {'source': 'progressive_test', 'priority': 'high'}}
 2025-07-12 19:15:49 | INFO | core.qdrant_writer:write_embeddings:57 | ✅ 1 embedding yazıldı
 2025-07-12 19:15:49 | INFO | __main__:process_message:60 | ✅ Mesaj başarıyla işlendi: test_001
+2025-07-13 02:31:27 | INFO | scripts.performance_test:run_stress_test:312 | Starting stress test: test_stress
+2025-07-13 02:31:27 | INFO | scripts.performance_test:save_report:425 | Performance report saved to: /var/folders/wc/9wcs90_d0_55d3_h9v8gf4040000gp/T/tmp1_awwmrn.json
+2025-07-13 02:32:04 | ERROR | scripts.performance_test:process_message_batch:157 | Message processing failed: Processing failed
+2025-07-13 02:32:04 | INFO | scripts.performance_test:run_throughput_test:164 | Starting throughput test: test_throughput
+2025-07-13 02:40:14 | INFO | scripts.performance_test:run_throughput_test:164 | Starting throughput test: test_throughput
+2025-07-13 02:40:14 | INFO | scripts.performance_test:run_throughput_test:264 | Throughput test completed: 827.05 msg/sec, 0.00% error rate
+2025-07-13 02:40:25 | ERROR | scripts.performance_test:process_message_batch:157 | Message processing failed: Processing failed
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_throughput_test:164 | Starting throughput test: test_throughput
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_throughput_test:264 | Throughput test completed: 803.01 msg/sec, 0.00% error rate
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_latency_test:270 | Starting latency test: test_latency
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_throughput_test:164 | Starting throughput test: test_latency
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_throughput_test:264 | Throughput test completed: 1662.87 msg/sec, 0.00% error rate
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_scalability_test:284 | Starting scalability test: test_scalability
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_scalability_test:295 | Testing with 1 workers
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_throughput_test:164 | Starting throughput test: test_scalability_workers_1
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_throughput_test:264 | Throughput test completed: 837.30 msg/sec, 0.00% error rate
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_scalability_test:295 | Testing with 2 workers
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_throughput_test:164 | Starting throughput test: test_scalability_workers_2
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_throughput_test:264 | Throughput test completed: 1622.27 msg/sec, 0.00% error rate
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_scalability_test:295 | Testing with 4 workers
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_throughput_test:164 | Starting throughput test: test_scalability_workers_4
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_throughput_test:264 | Throughput test completed: 3175.03 msg/sec, 0.00% error rate
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_scalability_test:295 | Testing with 8 workers
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_throughput_test:164 | Starting throughput test: test_scalability_workers_8
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_throughput_test:264 | Throughput test completed: 4945.06 msg/sec, 0.00% error rate
+2025-07-13 02:40:25 | INFO | scripts.performance_test:run_stress_test:312 | Starting stress test: test_stress
+2025-07-13 02:40:25 | INFO | scripts.performance_test:save_report:425 | Performance report saved to: /var/folders/wc/9wcs90_d0_55d3_h9v8gf4040000gp/T/tmp_jn8mkqt.json

@@ -40,3 +40,8 @@ rich==13.7.0
 
 cuDF
 cupy-cuda11x
+anyio
+pytest-asyncio
+pytest-tornasync
+pytest-trio
+pytest-twisted
