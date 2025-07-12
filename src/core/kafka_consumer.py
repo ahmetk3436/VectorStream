@@ -10,9 +10,9 @@ from typing import Dict, Any, Callable, Optional
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from config.kafka_config import KafkaConfig
-from utils.circuit_breaker import CircuitBreakerConfig, circuit_breaker_manager, CircuitBreakerError
-from utils.dead_letter_queue import get_dlq, FailureReason
+from src.config.kafka_config import KafkaConfig
+from src.utils.circuit_breaker import CircuitBreakerConfig, circuit_breaker_manager, CircuitBreakerError
+from src.utils.dead_letter_queue import get_dlq, FailureReason
 
 class KafkaConsumer:
     def __init__(self, config: KafkaConfig):

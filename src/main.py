@@ -9,10 +9,10 @@ from loguru import logger
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from core.kafka_consumer import KafkaConsumer
-from core.qdrant_writer import QdrantWriter
-from config.kafka_config import KafkaConfig
-from utils.logger import setup_logger
+from src.core.kafka_consumer import KafkaConsumer
+from src.core.qdrant_writer import QdrantWriter
+from src.config.kafka_config import KafkaConfig
+from src.utils.logger import setup_logger
 
 class NewMindAI:
     def __init__(self, config_path: str = "config/app_config.yaml"):

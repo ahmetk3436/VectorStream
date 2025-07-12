@@ -188,6 +188,11 @@ class CircuitBreakerManager:
 # Global circuit breaker manager
 circuit_breaker_manager = CircuitBreakerManager()
 
+def reset_circuit_breaker_manager():
+    """Global circuit breaker manager'ı sıfırla (test amaçlı)"""
+    global circuit_breaker_manager
+    circuit_breaker_manager = CircuitBreakerManager()
+
 # Decorator for easy usage
 def circuit_breaker(
     name: str, 
