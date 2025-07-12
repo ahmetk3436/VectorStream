@@ -10,24 +10,22 @@ services:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@localhost:9091"
-      KAFKA_LISTENERS: |
-        CONTROLLER://0.0.0.0:9091,
-        HOST://0.0.0.0:9092,
-        DOCKER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: |
-        HOST://localhost:9092,
-        DOCKER://kafka:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9091"   # localhost yerine servis adı
+      # Dinleyiciler (tek satır, katlama operatörü >- ile)
+      KAFKA_LISTENERS: >-
+        CONTROLLER://0.0.0.0:9091,HOST://0.0.0.0:9092,DOCKER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: >-
+        HOST://localhost:9092,DOCKER://kafka:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,HOST:PLAINTEXT,DOCKER:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     restart: unless-stopped
 
   kafka-ui:
-    image: kafbat/kafka-ui:latest             # Opsiyonel görsel arayüz
+    image: ghcr.io/kafbat/kafka-ui:main   # güncel sürüme geçildi
     container_name: kafka-ui
     ports:
-      - "8090:8080"
+      - "8090:8080"  # port çakışması düzeltildi
     environment:
       DYNAMIC_CONFIG_ENABLED: "true"
       KAFKA_CLUSTERS_0_NAME: local
@@ -44,6 +42,7 @@ services:
     volumes:
       - qdrant_storage:/qdrant/storage
     restart: unless-stopped
+    
   spark-master:
     image: apache/spark:latest         
     container_name: spark-master
