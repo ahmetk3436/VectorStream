@@ -75,3 +75,59 @@
 2025-07-13 02:40:25 | INFO | scripts.performance_test:run_throughput_test:264 | Throughput test completed: 4945.06 msg/sec, 0.00% error rate
 2025-07-13 02:40:25 | INFO | scripts.performance_test:run_stress_test:312 | Starting stress test: test_stress
 2025-07-13 02:40:25 | INFO | scripts.performance_test:save_report:425 | Performance report saved to: /var/folders/wc/9wcs90_d0_55d3_h9v8gf4040000gp/T/tmp_jn8mkqt.json
+2025-07-13 02:42:27 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for kafka
+2025-07-13 02:42:27 | INFO | tests.unit.test_chaos_engineering:recover_service:114 | Service kafka recovered
+2025-07-13 02:42:27 | INFO | tests.unit.test_chaos_engineering:inject_network_timeout:69 | Injecting network timeout: 0.1s delay
+2025-07-13 02:42:27 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for test_service
+2025-07-13 02:42:27 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for test_service
+2025-07-13 02:42:30 | INFO | tests.unit.test_chaos_engineering:run_network_partition_test:222 | Starting network partition test
+2025-07-13 02:42:40 | INFO | tests.unit.test_chaos_engineering:run_resource_exhaustion_test:242 | Starting resource exhaustion test
+2025-07-13 02:42:40 | INFO | tests.unit.test_chaos_engineering:inject_memory_pressure:74 | Injecting memory pressure: 50MB
+2025-07-13 02:42:40 | INFO | tests.unit.test_chaos_engineering:inject_cpu_load:81 | Injecting CPU load for 1s
+2025-07-13 02:42:42 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for kafka
+2025-07-13 02:42:42 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for kafka
+2025-07-13 02:42:45 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for qdrant
+2025-07-13 02:42:45 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for qdrant
+2025-07-13 02:42:48 | INFO | tests.unit.test_chaos_engineering:run_network_partition_test:222 | Starting network partition test
+2025-07-13 02:42:58 | INFO | tests.unit.test_chaos_engineering:run_resource_exhaustion_test:242 | Starting resource exhaustion test
+2025-07-13 02:42:58 | INFO | tests.unit.test_chaos_engineering:inject_memory_pressure:74 | Injecting memory pressure: 50MB
+2025-07-13 02:42:58 | INFO | tests.unit.test_chaos_engineering:inject_cpu_load:81 | Injecting CPU load for 1s
+2025-07-13 02:43:25 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for kafka
+2025-07-13 02:43:25 | INFO | tests.unit.test_chaos_engineering:recover_service:114 | Service kafka recovered
+2025-07-13 02:43:25 | INFO | tests.unit.test_chaos_engineering:inject_network_timeout:69 | Injecting network timeout: 0.1s delay
+2025-07-13 02:43:26 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for test_service
+2025-07-13 02:43:26 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for test_service
+2025-07-13 02:43:29 | INFO | tests.unit.test_chaos_engineering:run_network_partition_test:222 | Starting network partition test
+2025-07-13 02:43:39 | INFO | tests.unit.test_chaos_engineering:run_resource_exhaustion_test:242 | Starting resource exhaustion test
+2025-07-13 02:43:39 | INFO | tests.unit.test_chaos_engineering:inject_memory_pressure:74 | Injecting memory pressure: 50MB
+2025-07-13 02:43:39 | INFO | tests.unit.test_chaos_engineering:inject_cpu_load:81 | Injecting CPU load for 1s
+2025-07-13 02:43:40 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka' oluşturuldu
+2025-07-13 02:43:40 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'kafka' OPEN durumuna geçti. Sonraki deneme: 60.0 saniye sonra
+2025-07-13 02:43:40 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant' oluşturuldu
+2025-07-13 02:43:40 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'qdrant' OPEN durumuna geçti. Sonraki deneme: 60.0 saniye sonra
+2025-07-13 02:43:40 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for kafka
+2025-07-13 02:43:40 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for kafka
+2025-07-13 02:43:43 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for qdrant
+2025-07-13 02:43:43 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for qdrant
+2025-07-13 02:43:46 | INFO | tests.unit.test_chaos_engineering:run_network_partition_test:222 | Starting network partition test
+2025-07-13 02:43:56 | INFO | tests.unit.test_chaos_engineering:run_resource_exhaustion_test:242 | Starting resource exhaustion test
+2025-07-13 02:43:56 | INFO | tests.unit.test_chaos_engineering:inject_memory_pressure:74 | Injecting memory pressure: 50MB
+2025-07-13 02:43:56 | INFO | tests.unit.test_chaos_engineering:inject_cpu_load:81 | Injecting CPU load for 1s
+2025-07-13 02:44:16 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for kafka
+2025-07-13 02:44:16 | INFO | tests.unit.test_chaos_engineering:recover_service:114 | Service kafka recovered
+2025-07-13 02:44:16 | INFO | tests.unit.test_chaos_engineering:inject_network_timeout:69 | Injecting network timeout: 0.1s delay
+2025-07-13 02:44:16 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for test_service
+2025-07-13 02:44:16 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for test_service
+2025-07-13 02:44:19 | INFO | tests.unit.test_chaos_engineering:run_network_partition_test:222 | Starting network partition test
+2025-07-13 02:44:29 | INFO | tests.unit.test_chaos_engineering:run_resource_exhaustion_test:242 | Starting resource exhaustion test
+2025-07-13 02:44:29 | INFO | tests.unit.test_chaos_engineering:inject_memory_pressure:74 | Injecting memory pressure: 50MB
+2025-07-13 02:44:29 | INFO | tests.unit.test_chaos_engineering:inject_cpu_load:81 | Injecting CPU load for 1s
+2025-07-13 02:44:30 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka' oluşturuldu
+2025-07-13 02:44:30 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'kafka' OPEN durumuna geçti. Sonraki deneme: 60.0 saniye sonra
+2025-07-13 02:44:30 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant' oluşturuldu
+2025-07-13 02:44:30 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'qdrant' OPEN durumuna geçti. Sonraki deneme: 60.0 saniye sonra
+2025-07-13 02:44:30 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for kafka
+2025-07-13 02:44:30 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for kafka
+2025-07-13 02:44:33 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for qdrant
+2025-07-13 02:44:33 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for qdrant
+2025-07-13 02:44:36 | INFO | tests.unit.test_chaos_engineering:run_network_partition_test:222 | Starting network partition test
