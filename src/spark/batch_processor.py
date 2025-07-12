@@ -2,13 +2,14 @@
 
 import os
 import sys
+import json
+import time
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import col, when, lit, current_timestamp
+from pyspark.sql.functions import col, when, lit, current_timestamp, concat, monotonically_increasing_id, length, substring
 from loguru import logger
-import json
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent.parent.absolute()
@@ -17,6 +18,8 @@ sys.path.insert(0, str(project_root))
 from src.spark.embedding_job import SparkEmbeddingJob
 from src.utils.circuit_breaker import circuit_breaker, CircuitBreakerConfig
 from src.exceptions.embedding_exceptions import EmbeddingProcessingError
+from src.utils.error_handler import retry_with_policy, RetryPolicy, BackoffStrategy, NETWORK_RETRY_POLICY
+from src.spark.optimized_batch_processor import OptimizedSparkBatchProcessor, BatchConfig
 
 class SparkBatchProcessor:
     """
@@ -42,12 +45,35 @@ class SparkBatchProcessor:
         self.batch_size = self.batch_config.get('size', 10000)
         self.max_retries = self.batch_config.get('max_retries', 3)
         self.retry_delay = self.batch_config.get('retry_delay', 60)  # seconds
+        self.use_optimized = self.batch_config.get('use_optimized', False)
         
         # Paths
         self.input_path = self.batch_config.get('input_path', '/data/input')
         self.output_path = self.batch_config.get('output_path', '/data/output')
         self.checkpoint_path = self.batch_config.get('checkpoint_path', '/data/checkpoints')
         self.failed_path = self.batch_config.get('failed_path', '/data/failed')
+        
+        # Optimized processor kullanılacaksa
+        if self.use_optimized:
+            batch_config_obj = BatchConfig(
+                min_batch_size=self.batch_size // 2,
+                max_batch_size=self.batch_size * 2,
+                adaptive_batch_size=True,
+                max_parallel_files=4,
+                enable_caching=True,
+                enable_compression=True,
+                enable_metrics=True
+            )
+            
+            self.optimized_processor = OptimizedSparkBatchProcessor(
+                input_path=self.input_path,
+                output_path=self.output_path,
+                qdrant_config=self.qdrant_config,
+                batch_config=batch_config_obj
+            )
+            logger.info("✅ Optimized SparkBatchProcessor kullanılıyor")
+        else:
+            self.optimized_processor = None
         
         # Embedding job
         self.embedding_job = SparkEmbeddingJob(self.spark_config)
@@ -105,6 +131,11 @@ class SparkBatchProcessor:
             Dict[str, Any]: İşleme sonuçları
         """
         try:
+            # Optimized processor kullanılacaksa
+            if self.use_optimized and self.optimized_processor:
+                logger.info(f"Optimized processor ile batch dosyaları işleniyor: {file_pattern}")
+                return self.optimized_processor.process_batch_files(file_pattern)
+            
             logger.info(f"Batch dosyaları işleniyor: {file_pattern}")
             
             # Input dosyalarını bul
@@ -365,6 +396,11 @@ class SparkBatchProcessor:
         try:
             logger.info("Zamanlanmış batch işleme başlatılıyor...")
             
+            # Optimized processor kullanılacaksa
+            if self.use_optimized and self.optimized_processor:
+                logger.info("Optimized processor ile zamanlanmış batch işleme")
+                return self.optimized_processor.process_scheduled_batches()
+            
             # Farklı dosya türlerini işle
             file_patterns = [
                 "*.json",
@@ -450,6 +486,11 @@ class SparkBatchProcessor:
             Dict[str, Any]: İstatistikler
         """
         try:
+            # Optimized processor kullanılacaksa
+            if self.use_optimized and self.optimized_processor:
+                logger.debug("Optimized processor'dan performance raporu alınıyor")
+                return self.optimized_processor.get_performance_report()
+            
             stats = {
                 'input_files': len(list(Path(self.input_path).glob('*.json'))),
                 'processed_files': 0,
@@ -483,6 +524,12 @@ class SparkBatchProcessor:
         try:
             logger.info("Batch processor durduruluyor...")
             
+            # Optimized processor kullanılacaksa
+            if self.use_optimized and self.optimized_processor:
+                logger.info("Optimized processor durduruluyor...")
+                self.optimized_processor.stop()
+            
+            # Embedding job'ı durdur
             if self.embedding_job:
                 self.embedding_job.stop()
             
@@ -490,6 +537,3 @@ class SparkBatchProcessor:
             
         except Exception as e:
             logger.error(f"Batch processor durdurma hatası: {e}")
-
-# Helper imports for DataFrame operations
-from pyspark.sql.functions import concat, monotonically_increasing_id, length, substring

@@ -197,18 +197,22 @@ def reset_circuit_breaker_manager():
 def circuit_breaker(
     name: str, 
     config: Optional[CircuitBreakerConfig] = None
-):
+) -> Callable:
     """Circuit breaker decorator"""
-    def decorator(func):
-        cb = circuit_breaker_manager.create_circuit_breaker(name, config)
-        
+    def decorator(func: Callable) -> Callable:
         async def async_wrapper(*args, **kwargs):
+            cb = circuit_breaker_manager.get_circuit_breaker(name)
+            if cb is None:
+                cb = circuit_breaker_manager.create_circuit_breaker(name, config)
             return await cb.call(func, *args, **kwargs)
-        
+
         def sync_wrapper(*args, **kwargs):
+            cb = circuit_breaker_manager.get_circuit_breaker(name)
+            if cb is None:
+                cb = circuit_breaker_manager.create_circuit_breaker(name, config)
             loop = asyncio.get_event_loop()
             return loop.run_until_complete(cb.call(func, *args, **kwargs))
-        
+
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         else:

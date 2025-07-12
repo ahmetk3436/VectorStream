@@ -13,6 +13,10 @@ sys.path.insert(0, str(project_root))
 from src.config.kafka_config import KafkaConfig
 from src.utils.circuit_breaker import CircuitBreakerConfig, circuit_breaker_manager, CircuitBreakerError
 from src.utils.dead_letter_queue import get_dlq, FailureReason
+from src.utils.error_handler import (
+    retry_with_policy, RetryPolicy, BackoffStrategy,
+    NETWORK_RETRY_POLICY, retry_network_errors
+)
 
 class KafkaConsumer:
     def __init__(self, config: KafkaConfig):
@@ -92,13 +96,29 @@ class KafkaConsumer:
     
     async def _process_message(self, message):
         """Tek mesajı işle"""
-        try:
+        retry_count = 0
+        
+        # Retry policy for message processing
+        processing_policy = RetryPolicy(
+            max_attempts=3,
+            base_delay=1.0,
+            max_delay=10.0,
+            backoff_strategy=BackoffStrategy.EXPONENTIAL_JITTER,
+            retryable_exceptions=[ConnectionError, TimeoutError, OSError],
+            non_retryable_exceptions=[json.JSONDecodeError, ValueError, TypeError]
+        )
+        
+        @retry_with_policy(processing_policy)
+        async def _process_with_retry():
+            nonlocal retry_count
+            retry_count += 1
+            
             # Mesajı JSON olarak parse et
             try:
                 data = json.loads(message.value)
             except json.JSONDecodeError as e:
                 logger.error(f"JSON parse hatası: {e}")
-                # DLQ'ya gönder
+                # DLQ'ya gönder - JSON parse hatası retry edilmez
                 await self.dlq.send_to_dlq(
                     original_topic=message.topic,
                     original_partition=message.partition,
@@ -107,18 +127,25 @@ class KafkaConsumer:
                     original_value=message.value.decode('utf-8'),
                     failure_reason=FailureReason.VALIDATION_ERROR,
                     error_message=f"JSON parse hatası: {str(e)}",
-                    retry_count=0
+                    retry_count=retry_count
                 )
-                return
+                raise  # Non-retryable exception
             
-            logger.info(f"Mesaj alındı: {data}")
+            logger.info(f"Mesaj alındı (attempt {retry_count}): {data}")
             
             # Mesaj işleyiciye gönder
             if self.message_handler:
                 await self.message_handler(data)
-                
+        
+        try:
+            await _process_with_retry()
+            logger.debug(f"Mesaj başarıyla işlendi (toplam {retry_count} deneme)")
+            
+        except json.JSONDecodeError:
+            # JSON parse hatası - zaten DLQ'ya gönderildi
+            pass
         except Exception as e:
-            logger.error(f"Mesaj işleme hatası: {e}")
+            logger.error(f"Mesaj işleme hatası (toplam {retry_count} deneme): {e}")
             # DLQ'ya gönder
             await self.dlq.send_to_dlq(
                 original_topic=message.topic,
@@ -128,7 +155,7 @@ class KafkaConsumer:
                 original_value=message.value.decode('utf-8'),
                 failure_reason=FailureReason.PROCESSING_ERROR,
                 error_message=str(e),
-                retry_count=0
+                retry_count=retry_count
             )
             
     async def close(self):

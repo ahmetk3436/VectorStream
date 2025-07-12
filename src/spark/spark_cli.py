@@ -95,7 +95,8 @@ class SparkCLI:
     def run_batch_processor(self, 
                            config_path: Optional[str] = None,
                            file_pattern: str = "*.json",
-                           cleanup_days: int = 7):
+                           cleanup_days: int = 7,
+                           use_optimized: bool = False):
         """
         Batch processor'ı çalıştır
         
@@ -103,12 +104,18 @@ class SparkCLI:
             config_path: Konfigürasyon dosya yolu
             file_pattern: İşlenecek dosya pattern'i
             cleanup_days: Temizlenecek eski dosyaların gün sayısı
+            use_optimized: Optimize edilmiş batch processor kullan
         """
         try:
-            logger.info(f"Batch processor başlatılıyor: {file_pattern}")
+            processor_type = "Optimized" if use_optimized else "Standard"
+            logger.info(f"{processor_type} batch processor başlatılıyor: {file_pattern}")
             
             # Konfigürasyonu yükle
             self.load_configuration(config_path)
+            
+            # Optimized processor kullanımını config'e ekle
+            if use_optimized:
+                self.config['use_optimized'] = True
             
             # Batch processor'ı oluştur
             self.batch_processor = SparkBatchProcessor(self.config)
@@ -127,7 +134,7 @@ class SparkCLI:
             stats = self.batch_processor.get_processing_stats()
             logger.info(f"İşleme istatistikleri: {stats}")
             
-            logger.info("✅ Batch processor tamamlandı")
+            logger.info(f"✅ {processor_type} batch processor tamamlandı")
             
         except Exception as e:
             logger.error(f"Batch processor hatası: {e}")
@@ -330,6 +337,9 @@ def main():
   # Batch processor çalıştır
   python spark_cli.py batch-processor --pattern "*.json" --cleanup-days 7
   
+  # Optimized batch processor çalıştır
+  python spark_cli.py batch-processor --pattern "*.json" --optimized
+  
   # Streaming başlat
   python spark_cli.py streaming --duration 300
   
@@ -367,6 +377,8 @@ def main():
                                  help='Dosya pattern (varsayılan: *.json)')
     processor_parser.add_argument('--cleanup-days', '-d', type=int, default=7,
                                  help='Temizlenecek eski dosyaların gün sayısı (varsayılan: 7)')
+    processor_parser.add_argument('--optimized', action='store_true',
+                                 help='Optimize edilmiş batch processor kullan')
     
     # Streaming command
     streaming_parser = subparsers.add_parser('streaming', help='Streaming pipeline başlat')
@@ -415,7 +427,8 @@ def main():
             cli.run_batch_processor(
                 config_path=args.config,
                 file_pattern=args.pattern,
-                cleanup_days=args.cleanup_days
+                cleanup_days=args.cleanup_days,
+                use_optimized=args.optimized
             )
         
         elif args.command == 'streaming':
