@@ -37,7 +37,6 @@ graph TB
             %% Monitoring Stack
             PROM[Prometheus]
             GRAF[Grafana]
-            ALERT[AlertManager]
         end
         
         subgraph NS3["monitoring namespace"]
@@ -110,7 +109,6 @@ graph TB
     PROM --> QW2
     
     GRAF --> PROM
-    ALERT --> PROM
     
     FLUENTD --> ELK
     
@@ -126,7 +124,7 @@ graph TB
     
     class KC1,KC2,KC3,EP1,EP2,QW1,QW2,SVC_KC,SVC_EP,SVC_QW app
     class K,Q infra
-    class PROM,GRAF,ALERT,ELK,FLUENTD monitoring
+    class PROM,GRAF,ELK,FLUENTD monitoring
     class PV1,PV2,PV3 storage
     class REGISTRY,BACKUP external
 ```

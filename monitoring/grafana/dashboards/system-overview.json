@@ -1,8 +1,8 @@
 {
   "dashboard": {
     "id": null,
-    "title": "NewMind AI - Sistem Genel Bakış",
-    "tags": ["newmind-ai", "overview", "system"],
+    "title": "VectorStream - Sistem Genel Bakış",
+    "tags": ["vectorstream", "overview", "system"],
     "style": "dark",
     "timezone": "browser",
     "panels": [
@@ -12,7 +12,7 @@
         "type": "stat",
         "targets": [
           {
-            "expr": "up{job=\"newmind-ai\"}",
+            "expr": "up{job=\"vectorstream\"}",
             "refId": "A"
           }
         ],

@@ -1,47 +1,76 @@
-kafka-python==2.0.2
-qdrant-client==1.7.0
-pyspark==3.5.0
-numpy==1.24.3
-pandas==2.0.3
-scikit-learn==1.3.0
-prometheus-client==0.19.0
-pyyaml==6.0.1
-loguru==0.7.2
-aiofiles==23.2.1
-aiohttp==3.9.1
+kafka-python
+qdrant-client
+pyspark
+numpy
+pandas
+scikit-learn
+prometheus-client
+pyyaml
+loguru
+aiofiles
+aiohttp
+asyncio
 
 # Web framework and server
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
+fastapi
+uvicorn[standard]
 
 # System monitoring
-psutil==5.9.6
+psutil
 
 # Data validation
-pydantic==2.5.0
-pydantic-settings==2.1.0
+pydantic
+pydantic-settings
 
 # Testing dependencies
-pytest==7.4.3
-pytest-asyncio==0.21.1
-pytest-mock==3.12.0
-httpx==0.25.2
+pytest
+pytest-asyncio
+pytest-mock
+httpx
 
 # Development dependencies
-black==23.11.0
-flake8==6.1.0
-mypy==1.7.1
-isort==5.12.0
+black
+flake8
+mypy
+isort
 
 # Additional utilities
-requests==2.31.0
-click==8.1.7
-rich==13.7.0
+requests
+click
+rich
+transformers
+datasets
 
-cuDF
-cupy-cuda11x
+# RAPIDS GPU acceleration
+#cudf-cu
+#cuml-cu
+#cupy-cudax
+#rmm-cu
+
+# Sentence Transformers for embeddings
+sentence-transformers
+torch
+torchvision
+
+# Additional required packages
+concurrent-futures
+transformers
+
+# Additional Spark dependencies
+pyj
+findspark
+
+# Monitoring and metrics
+prometheus-client
+grafana-api
+
+# Circuit breaker and resilience
+circuitbreaker
+tenacity
+
+# Performance monitoring
+memory-profiler
+line-profiler
+
+# Additional async utilities
 anyio
-pytest-asyncio
-pytest-tornasync
-pytest-trio
-pytest-twisted

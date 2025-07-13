@@ -64,8 +64,9 @@ class MetricsCollector:
     def record_kafka_metrics(self, topic: str, partition: str, status: str, duration: float):
         """Kafka metriklerini kaydet"""
         try:
+            # Ensure correct labels for topic and status
             if hasattr(self.metrics, 'record_kafka_message_processed') and status == "success":
-                self.metrics.record_kafka_message_processed(topic)
+                self.metrics.record_kafka_message_processed(topic, status)
             elif hasattr(self.metrics, 'record_kafka_message_failed') and status != "success":
                 self.metrics.record_kafka_message_failed(topic, status)
             logger.debug(f"Kafka metrics recorded - topic: {topic}, partition: {partition}, status: {status}, duration: {duration:.3f}s")
@@ -75,8 +76,9 @@ class MetricsCollector:
     def record_qdrant_metrics(self, operation: str, collection: str, status: str, duration: float, results_count: int = 0):
         """Qdrant metriklerini kaydet"""
         try:
+            # Ensure correct signature: operation, collection, status, duration
             if hasattr(self.metrics, 'record_qdrant_operation'):
-                self.metrics.record_qdrant_operation(operation, status, duration)
+                self.metrics.record_qdrant_operation(operation, collection, status, duration)
             logger.debug(f"Qdrant metrics recorded - operation: {operation}, collection: {collection}, status: {status}, duration: {duration:.3f}s, results: {results_count}")
         except Exception as e:
             logger.error(f"Failed to record Qdrant metrics: {str(e)}")

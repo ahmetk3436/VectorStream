@@ -28,8 +28,6 @@ flowchart TD
     CHECK_RETRY -->|Yes| WAIT[Wait with<br/>Exponential Backoff]
     WAIT --> PROCESS
     CHECK_RETRY -->|No| PROC_FAILED[Mark as Failed]
-    PROC_FAILED --> ALERT_PROC[Send Alert]
-    ALERT_PROC --> CONSUME
     
     PROC_SUCCESS -->|Yes| STORE[Store in Qdrant]
     
@@ -40,8 +38,6 @@ flowchart TD
     CHECK_STORE_RETRY -->|Yes| BACKOFF[Exponential Backoff]
     BACKOFF --> STORE
     CHECK_STORE_RETRY -->|No| STORE_FAILED[Storage Failed]
-    STORE_FAILED --> ALERT_STORE[Send Alert]
-    ALERT_STORE --> FALLBACK[Store in Backup]
     FALLBACK --> CONSUME
     
     STORE_SUCCESS -->|Yes| SUCCESS[Success]
@@ -60,12 +56,6 @@ flowchart TD
     %% Health Check Failures
     RETRY_KAFKA -->|Max Retries| KAFKA_DOWN[Kafka Down]
     RETRY_QDRANT -->|Max Retries| QDRANT_DOWN[Qdrant Down]
-    
-    KAFKA_DOWN --> ALERT_KAFKA[Send Critical Alert]
-    QDRANT_DOWN --> ALERT_QDRANT[Send Critical Alert]
-    
-    ALERT_KAFKA --> GRACEFUL_SHUTDOWN[Graceful Shutdown]
-    ALERT_QDRANT --> GRACEFUL_SHUTDOWN
     
     %% Monitoring and Alerting
     LOG_INVALID --> MONITOR[Update Error Metrics]

@@ -1,8 +1,8 @@
 {
   "dashboard": {
     "id": null,
-    "title": "NewMind AI - Uygulama Performansı",
-    "tags": ["newmind-ai", "performance", "application"],
+    "title": "VectorStream - Uygulama Performansı",
+    "tags": ["vectorstream", "performance", "application"],
     "style": "dark",
     "timezone": "browser",
     "panels": [
@@ -12,7 +12,7 @@
         "type": "stat",
         "targets": [
           {
-            "expr": "up{job=\"newmind-ai\"}",
+            "expr": "up{job=\"vectorstream\"}",
             "refId": "A"
           }
         ],
@@ -61,7 +61,7 @@
         "type": "stat",
         "targets": [
           {
-            "expr": "rate(processed_messages_total[5m])",
+            "expr": "rate(kafka_consumer_records_consumed_total[5m])",
             "refId": "A"
           }
         ],
@@ -86,7 +86,7 @@
         "type": "stat",
         "targets": [
           {
-            "expr": "(sum(rate(processed_messages_total{status=\"success\"}[5m])) / sum(rate(processed_messages_total[5m]))) * 100",
+            "expr": "(1 - (rate(kafka_consumer_fetch_manager_records_lag[5m]) / rate(kafka_consumer_records_consumed_total[5m]))) * 100",
             "refId": "A"
           }
         ],
@@ -127,7 +127,7 @@
         "type": "stat",
         "targets": [
           {
-            "expr": "avg(rate(processing_duration_seconds_sum[5m]) / rate(processing_duration_seconds_count[5m])) * 1000",
+            "expr": "histogram_quantile(0.95, rate(qdrant_request_duration_seconds_bucket[5m])) * 1000",
             "refId": "A"
           }
         ],

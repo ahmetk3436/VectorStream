@@ -56,12 +56,34 @@ class SparkEmbeddingJob:
         try:
             logger.info("Spark session başlatılıyor...")
             
+            # Set environment variables to bypass security issues
+            os.environ.setdefault('HADOOP_HOME', '/tmp')
+            os.environ.setdefault('HADOOP_CONF_DIR', '/tmp')
+            os.environ.setdefault('SPARK_LOCAL_IP', '127.0.0.1')
+        
+            
             spark_builder = SparkSession.builder \
                 .appName("NewMind-AI-Embedding-Processor") \
                 .config("spark.sql.adaptive.enabled", "true") \
                 .config("spark.sql.adaptive.coalescePartitions.enabled", "true") \
                 .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
-                .config("spark.sql.execution.arrow.pyspark.enabled", "true")
+                .config("spark.sql.execution.arrow.pyspark.enabled", "true") \
+                .config("spark.hadoop.mapreduce.application.classpath", "") \
+                .config("spark.hadoop.yarn.application.classpath", "") \
+                .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0") \
+                .config("spark.sql.streaming.kafka.useDeprecatedOffsetFetching", "false") \
+                .config("spark.sql.streaming.kafka.useUninterruptibleThread", "true") \
+                .config("spark.streaming.kafka.consumer.cache.enabled", "false") \
+                .config("spark.streaming.kafka.consumer.poll.ms", "5000") \
+                .config("spark.streaming.stopGracefullyOnShutdown", "true") \
+                .config("spark.sql.streaming.stopActiveRunOnRestart", "true") \
+                .config("spark.sql.streaming.kafka.consumer.requestTimeoutMs", "30000") \
+                .config("spark.sql.streaming.kafka.consumer.sessionTimeoutMs", "30000") \
+                .config("spark.sql.streaming.kafka.consumer.heartbeatIntervalMs", "3000") \
+                .config("spark.task.killThread.enabled", "false") \
+                .config("spark.task.interruptOnCancel", "false") \
+                .config("spark.sql.streaming.kafka.consumer.pollTimeoutMs", "5000") \
+                .config("spark.sql.streaming.kafka.consumer.fetchOffset.numRetries", "3") \
             
             # Master URL'i ayarla
             master_url = self.spark_config.get('master', 'local[*]')
@@ -81,10 +103,15 @@ class SparkEmbeddingJob:
             
             self.spark = spark_builder.getOrCreate()
             
-            # Log level'ı ayarla
-            self.spark.sparkContext.setLogLevel("WARN")
+            # Log level'ı ayarla - KAFKA-1894 uyarılarını azalt
+            self.spark.sparkContext.setLogLevel("ERROR")  # WARN'den ERROR'a düşür
             
-            logger.info(f"✅ Spark session başlatıldı: {self.spark.version}")
+            # Kafka-specific loggerları sustur
+            log4j = self.spark.sparkContext._gateway.jvm.org.apache.log4j
+            kafka_logger = log4j.LogManager.getLogger("org.apache.spark.sql.kafka010.KafkaDataConsumer")
+            kafka_logger.setLevel(log4j.Level.ERROR)
+            
+            logger.info(f"✅ Spark session başlatıldı: {self.spark.version} (KAFKA-1894 fix uygulandı)")
             logger.info(f"   Master: {master_url}")
             logger.info(f"   Executor Memory: {executor_memory}")
             logger.info(f"   Executor Cores: {executor_cores}")

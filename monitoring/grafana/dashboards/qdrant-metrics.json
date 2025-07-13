@@ -1,8 +1,8 @@
 {
   "dashboard": {
     "id": null,
-    "title": "NewMind AI - Qdrant Metrikleri",
-    "tags": ["newmind-ai", "qdrant", "vector-db"],
+    "title": "VectorStream - Qdrant Metrikleri",
+    "tags": ["vectorstream", "qdrant", "vector-db"],
     "style": "dark",
     "timezone": "browser",
     "panels": [
@@ -12,7 +12,7 @@
         "type": "stat",
         "targets": [
           {
-            "expr": "qdrant_connection_status",
+            "expr": "up{job=\"qdrant\"}",
             "refId": "A"
           }
         ],
@@ -61,12 +61,12 @@
         "type": "timeseries",
         "targets": [
           {
-            "expr": "histogram_quantile(0.95, rate(qdrant_operations_duration_seconds_bucket[5m])) * 1000",
+            "expr": "histogram_quantile(0.95, rate(qdrant_request_duration_seconds_bucket[5m])) * 1000",
             "refId": "A",
             "legendFormat": "95th percentile"
           },
           {
-            "expr": "histogram_quantile(0.50, rate(qdrant_operations_duration_seconds_bucket[5m])) * 1000",
+            "expr": "histogram_quantile(0.50, rate(qdrant_request_duration_seconds_bucket[5m])) * 1000",
             "refId": "B",
             "legendFormat": "50th percentile"
           }
@@ -92,9 +92,9 @@
         "type": "timeseries",
         "targets": [
           {
-            "expr": "rate(qdrant_operations_total[5m])",
+            "expr": "rate(qdrant_requests_total[5m])",
             "refId": "A",
-            "legendFormat": "{{operation}}"
+            "legendFormat": "{{method}}"
           }
         ],
         "fieldConfig": {

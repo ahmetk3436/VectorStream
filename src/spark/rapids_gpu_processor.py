@@ -130,6 +130,89 @@ class RAPIDSGPUProcessor:
         
         return self._sentence_model
 
+    def process_embeddings_gpu(self, texts: List[str]) -> List[List[float]]:
+        """
+        Process embeddings using GPU acceleration.
+        
+        Args:
+            texts: List of text strings to process
+            
+        Returns:
+            List of embedding vectors
+        """
+        try:
+            if not self.gpu_enabled:
+                logger.warning("GPU not available, falling back to CPU")
+                return self._process_embeddings_cpu(texts)
+            
+            # Convert to cuDF DataFrame for GPU processing
+            import cudf
+            df = cudf.DataFrame({'text': texts})
+            
+            # Process embeddings using SentenceTransformer on GPU
+            embeddings = self._get_sentence_model().encode(
+                texts,
+                device='cuda' if self.gpu_enabled else 'cpu',
+                batch_size=self.batch_size,
+                show_progress_bar=False
+            )
+            
+            # Use RAPIDS cuML for additional GPU acceleration if available
+            if self.gpu_config.get('use_cuml_acceleration', False):
+                embeddings = self._apply_cuml_acceleration(embeddings)
+            
+            return embeddings.tolist()
+            
+        except Exception as e:
+            logger.error(f"GPU embedding processing failed: {str(e)}")
+            return self._process_embeddings_cpu(texts)
+    
+    def _process_embeddings_cpu(self, texts: List[str]) -> List[List[float]]:
+        """
+        Process embeddings using CPU fallback.
+        
+        Args:
+            texts: List of text strings to process
+            
+        Returns:
+            List of embedding vectors
+        """
+        try:
+            if self.use_tfidf_fallback:
+                embeddings = self._create_tfidf_embeddings_cpu(texts)
+            else:
+                embeddings = self._create_sentence_embeddings(texts)
+            
+            return embeddings.tolist()
+            
+        except Exception as e:
+            logger.error(f"CPU embedding processing failed: {str(e)}")
+            raise EmbeddingProcessingError(f"CPU embedding failed: {e}")
+    
+    def _apply_cuml_acceleration(self, embeddings: np.ndarray) -> np.ndarray:
+        """
+        Apply cuML acceleration to embeddings.
+        
+        Args:
+            embeddings: Input embeddings
+            
+        Returns:
+            Accelerated embeddings
+        """
+        try:
+            # Convert to cupy array for GPU processing
+            gpu_embeddings = cp.asarray(embeddings)
+            
+            # Apply normalization using cuML
+            normalized_embeddings = cu_normalize(gpu_embeddings, norm='l2')
+            
+            # Convert back to numpy
+            return cp.asnumpy(normalized_embeddings)
+            
+        except Exception as e:
+            logger.warning(f"cuML acceleration failed, using original embeddings: {e}")
+            return embeddings
+    
     def get_memory_usage(self) -> Dict[str, Any]:
         """
         Get current memory usage (system and GPU)

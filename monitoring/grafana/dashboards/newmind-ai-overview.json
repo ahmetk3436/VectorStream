@@ -90,21 +90,21 @@
       },
       "targets": [
         {
-          "expr": "newmind_ai_system_cpu_usage_percent",
+          "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
           "interval": "",
-          "legendFormat": "CPU Usage",
+          "legendFormat": "CPU Usage - {{instance}}",
           "refId": "A"
         },
         {
-          "expr": "newmind_ai_system_memory_usage_percent",
+          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
           "interval": "",
-          "legendFormat": "Memory Usage",
+          "legendFormat": "Memory Usage - {{instance}}",
           "refId": "B"
         },
         {
-          "expr": "newmind_ai_system_disk_usage_percent",
+          "expr": "(1 - (node_filesystem_avail_bytes{fstype!=\"tmpfs\"} / node_filesystem_size_bytes{fstype!=\"tmpfs\"})) * 100",
           "interval": "",
-          "legendFormat": "Disk Usage",
+          "legendFormat": "Disk Usage - {{instance}}",
           "refId": "C"
         }
       ],
@@ -175,21 +175,21 @@
       "pluginVersion": "8.0.0",
       "targets": [
         {
-          "expr": "newmind_ai_health_check_status{service=\"kafka\"}",
+          "expr": "up{job=\"kafka\"}",
           "interval": "",
           "legendFormat": "Kafka",
           "refId": "A"
         },
         {
-          "expr": "newmind_ai_health_check_status{service=\"qdrant\"}",
+          "expr": "up{job=\"qdrant\"}",
           "interval": "",
           "legendFormat": "Qdrant",
           "refId": "B"
         },
         {
-          "expr": "newmind_ai_health_check_status{service=\"system\"}",
+          "expr": "up{job=\"prometheus\"}",
           "interval": "",
-          "legendFormat": "System",
+          "legendFormat": "Prometheus",
           "refId": "C"
         }
       ],
@@ -268,21 +268,21 @@
       },
       "targets": [
         {
-          "expr": "rate(newmind_ai_kafka_messages_consumed_total[5m])",
+          "expr": "rate(kafka_consumer_records_consumed_total[5m])",
           "interval": "",
-          "legendFormat": "Messages Consumed",
+          "legendFormat": "Messages Consumed - {{topic}}",
           "refId": "A"
         },
         {
-          "expr": "rate(newmind_ai_kafka_messages_processed_total[5m])",
+          "expr": "rate(kafka_producer_record_send_total[5m])",
           "interval": "",
-          "legendFormat": "Messages Processed",
+          "legendFormat": "Messages Produced - {{topic}}",
           "refId": "B"
         },
         {
-          "expr": "rate(newmind_ai_kafka_messages_failed_total[5m])",
+          "expr": "kafka_consumer_lag_sum",
           "interval": "",
-          "legendFormat": "Messages Failed",
+          "legendFormat": "Consumer Lag - {{topic}}",
           "refId": "C"
         }
       ],
@@ -361,13 +361,13 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(newmind_ai_qdrant_operation_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.95, rate(qdrant_request_duration_seconds_bucket[5m]))",
           "interval": "",
           "legendFormat": "95th percentile",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.50, rate(newmind_ai_qdrant_operation_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.50, rate(qdrant_request_duration_seconds_bucket[5m]))",
           "interval": "",
           "legendFormat": "50th percentile",
           "refId": "B"
@@ -448,10 +448,16 @@
       },
       "targets": [
         {
-          "expr": "rate(newmind_ai_processing_errors_total[5m])",
+          "expr": "rate(prometheus_rule_evaluation_failures_total[5m])",
           "interval": "",
-          "legendFormat": "{{component}} - {{error_type}}",
+          "legendFormat": "Prometheus Rule Failures",
           "refId": "A"
+        },
+        {
+          "expr": "rate(qdrant_request_errors_total[5m])",
+          "interval": "",
+          "legendFormat": "Qdrant Errors - {{method}}",
+          "refId": "B"
         }
       ],
       "title": "Error Rate by Component",
@@ -510,9 +516,9 @@
       "pluginVersion": "8.0.0",
       "targets": [
         {
-          "expr": "newmind_ai_application_uptime_seconds",
+          "expr": "node_boot_time_seconds",
           "interval": "",
-          "legendFormat": "Uptime",
+          "legendFormat": "System Boot Time",
           "refId": "A"
         }
       ],
@@ -523,7 +529,7 @@
   "schemaVersion": 27,
   "style": "dark",
   "tags": [
-    "newmind-ai",
+    "vectorstream",
     "overview"
   ],
   "templating": {
@@ -535,7 +541,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "NewMind AI - System Overview",
-  "uid": "newmind-ai-overview",
+  "title": "VectorStream - System Overview",
+  "uid": "vectorstream-overview",
   "version": 1
 }

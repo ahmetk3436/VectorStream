@@ -16,7 +16,9 @@ class PrometheusMetrics:
     """Prometheus metrics collector"""
     
     def __init__(self, registry: Optional[CollectorRegistry] = None):
+        # Initialize a dedicated registry and record the start timestamp
         self.registry = registry or CollectorRegistry()
+        self._start_time = time.time()
         self.setup_metrics()
         
     def setup_metrics(self):
@@ -97,6 +99,7 @@ class PrometheusMetrics:
         self.embedding_processing_duration = Histogram(
             'newmind_ai_embedding_processing_duration_seconds',
             'Duration of embedding processing',
+            ['model'],
             buckets=[0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
             registry=self.registry
         )
@@ -202,8 +205,8 @@ class PrometheusMetrics:
             registry=self.registry
         )
         
-        # Set application start time
-        self.application_start_time.set(time.time())
+        # Set application start time to the stored start timestamp
+        self.application_start_time.set(self._start_time)
         
     def record_kafka_message_consumed(self, topic: str, partition: int):
         """Kafka mesaj tüketimi kaydı"""
@@ -212,57 +215,74 @@ class PrometheusMetrics:
     def record_kafka_message_processed(self, topic: str, status: str = "success"):
         """Kafka mesaj işleme başarısı kaydı"""
         self.kafka_messages_processed.labels(topic=topic, status=status).inc()
-        
+    
     def record_kafka_message_failed(self, topic: str, error_type: str):
         """Kafka mesaj işleme hatası kaydı"""
         self.kafka_messages_failed.labels(topic=topic, error_type=error_type).inc()
-        
+    
     def set_kafka_consumer_lag(self, topic: str, partition: int, lag: int):
         """Kafka consumer lag güncelleme"""
         self.kafka_consumer_lag.labels(topic=topic, partition=partition).set(lag)
-        
+    
     def set_kafka_connection_status(self, connected: bool):
         """Kafka bağlantı durumu güncelleme"""
-        self.kafka_connection_status.set(1 if connected else 0)
-        
+        self.kafka_connection_status.set(1.0 if connected else 0.0)
+    
     def record_qdrant_operation(self, operation: str, collection: str, status: str, duration: float):
         """Qdrant operasyon kaydı"""
         self.qdrant_operations.labels(operation=operation, collection=collection, status=status).inc()
         self.qdrant_operation_duration.labels(operation=operation, collection=collection).observe(duration)
-        
+    
     def set_qdrant_collection_size(self, collection: str, size: int):
         """Qdrant koleksiyon boyutu güncelleme"""
         self.qdrant_collection_size.labels(collection=collection).set(size)
-        
+    
     def set_qdrant_connection_status(self, connected: bool):
         """Qdrant bağlantı durumu güncelleme"""
-        self.qdrant_connection_status.set(1 if connected else 0)
-        
+        self.qdrant_connection_status.set(1.0 if connected else 0.0)
+    
+    def update_qdrant_collection_points(self, collection: str, points: int):
+        """Qdrant koleksiyon nokta sayısı güncelleme"""
+        self.qdrant_collection_points.labels(collection=collection).set(points)
+    
+    def record_qdrant_search_results(self, collection: str, results_count: int):
+        """Qdrant arama sonuç sayısı kaydı"""
+        self.qdrant_search_results.labels(collection=collection).set(results_count)
+    
     def record_embedding_processing(self, duration: float, model: str):
         """Embedding işleme kaydı"""
-        self.embedding_processing_duration.observe(duration)
+        self.embedding_processing_duration.labels(model=model).observe(duration)
         self.embeddings_generated.labels(model=model).inc()
-        
+    
     def record_processing_error(self, component: str, error_type: str):
         """İşleme hatası kaydı"""
         self.processing_errors.labels(component=component, error_type=error_type).inc()
-        
+        self.error_rate.labels(component=component, error_type=error_type).inc()
+    
     def update_system_metrics(self, cpu_percent: float, memory_percent: float, disk_percent: float):
         """Sistem metriklerini güncelle"""
         self.system_cpu_usage.set(cpu_percent)
         self.system_memory_usage.set(memory_percent)
         self.system_disk_usage.set(disk_percent)
-        
+    
     def record_health_check(self, service: str, status: str, duration: float):
         """Sağlık kontrolü kaydı"""
-        self.health_check_status.labels(service=service, status=status).set(1)
+        self.health_check_status.labels(service=service, status=status).set(1.0)
         self.health_check_duration.labels(service=service).observe(duration)
-        
+    
+    def update_application_uptime(self, uptime: float):
+        """Uygulama çalışma süresini ayarla"""
+        self.application_uptime.set(uptime)
+
     def update_uptime(self):
         """Uygulama uptime güncelleme"""
-        start_time = self.application_start_time._value._value
-        uptime = time.time() - start_time
+        # Compute uptime from the stored start timestamp
+        uptime = time.time() - self._start_time
         self.application_uptime.set(uptime)
+        
+    def get_uptime(self) -> float:
+        """Uygulama uptime'ını döndür"""
+        return time.time() - self._start_time
         
     def update_application_uptime(self):
         """Uygulama uptime güncelleme (alias)"""
@@ -314,12 +334,6 @@ class PrometheusMetrics:
         """Disk kullanımı güncelleme"""
         self.system_disk_usage.set(disk_percent)
         
-
-        
-    def update_application_uptime(self, uptime: float):
-        """Uygulama uptime güncelleme (parametre ile)"""
-        self.application_uptime.set(uptime)
-        
     def set_system_info(self, info: Dict[str, str]):
         """Sistem bilgilerini ayarla"""
         self.system_info.info(info)
@@ -343,7 +357,9 @@ class MetricsServer:
     def start(self):
         """Metrics server'ını başlat"""
         if self.httpd is None:
-            self.httpd = start_http_server(self.port, registry=self.registry)
+            # Serve metrics from the PrometheusMetrics registry
+            registry = getattr(self.metrics, 'registry', None)
+            self.httpd = start_http_server(self.port, registry=registry)
             logger.info(f"Starting Prometheus metrics server on port {self.port}")
         return self.httpd
         

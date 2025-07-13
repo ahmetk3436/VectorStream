@@ -1,27 +1,93 @@
+# VectorStream: Real-time E-Commerce Behavior Analysis Pipeline Configuration
+# MLOps Task Requirements Implementation
+
+# Task Requirement: Kafka event streaming
 kafka:
   bootstrap_servers: "localhost:9092"
-  topic: "raw_data"
-  group_id: "embedding_processor"
+  topic: "ecommerce-events"  # Task requirement: e-commerce events
+  group_id: "vectorstream-consumer"
   auto_offset_reset: "latest"
   batch_size: 100
+  max_poll_records: 1000  # Performance requirement: 1000+ events/sec
+  session_timeout_ms: 30000
+  heartbeat_interval_ms: 3000
 
+# Task Requirement: Qdrant vector database  
 qdrant:
   host: "localhost"
   port: 6333
-  collection_name: "embeddings"
-  vector_size: 384
+  collection_name: "ecommerce_embeddings"  # Task compliant naming
+  vector_size: 384  # Task requirement: Sentence Transformers default
   distance: "Cosine"
+  timeout: 30
+  batch_size: 100
 
+# Task Requirement: Apache Spark Structured Streaming (mandatory)
 spark:
-  app_name: "NewMind-AI-Processor"
-  master: "spark://localhost:7077"
+  app_name: "VectorStream-MLOps-Pipeline"
+  master: "local[*]"  # Use all available cores
   executor_memory: "2g"
   driver_memory: "1g"
+  executor_cores: 2
+  max_executors: 4
+  streaming:
+    batch_interval: 10  # Task requirement: 10 seconds
+    checkpoint_location: "/tmp/spark-checkpoint-vectorstream"
+    trigger_interval: "10 seconds"  # Task requirement
+    max_offsets_per_trigger: 1000  # Performance requirement
+    output_mode: "append"
+  kafka:
+    starting_offsets: "latest"
+    fetch_timeout: 60
+    enable_auto_commit: true
+  packages:
+    - "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0"
+    - "org.apache.kafka:kafka-clients:3.4.0"
+  jars:
+    # Kafka integration JARs
+    - "https://repo1.maven.org/maven2/org/apache/spark/spark-sql-kafka-0-10_2.12/3.5.0/spark-sql-kafka-0-10_2.12-3.5.0.jar"
+    - "https://repo1.maven.org/maven2/org/apache/kafka/kafka-clients/3.4.0/kafka-clients-3.4.0.jar"
+    - "https://repo1.maven.org/maven2/org/apache/spark/spark-token-provider-kafka-0-10_2.12/3.5.0/spark-token-provider-kafka-0-10_2.12-3.5.0.jar"
+    - "https://repo1.maven.org/maven2/org/apache/commons/commons-pool2/2.11.1/commons-pool2-2.11.1.jar"
+
+# Task Requirement: Sentence Transformers embedding
+embedding:
+  model_name: "all-MiniLM-L6-v2"  # Task requirement: Sentence Transformers
+  vector_size: 384
+  device: "cpu"  # Will auto-detect GPU if available
+  batch_size: 32
+  max_length: 512
+  normalize_embeddings: true
+  
+# Task Requirement: RAPIDS GPU acceleration (optional but preferred)
+rapids:
+  enabled: true
+  gpu_memory_fraction: 0.8
+  cuml_acceleration: true
+  embedding:
+    device: "cuda"
+    batch_size: 64  # Larger batch for GPU
+  performance:
+    enable_memory_pool: true
+    enable_async_processing: true
+
+# Performance monitoring (Task requirement: 1000+ events/sec, <30s latency)
+performance:
+  target_throughput: 1000  # Task requirement: min 1000 events/sec
+  max_latency: 30  # Task requirement: max 30 seconds
+  batch_timeout: 10
+  retry_attempts: 3
+  retry_delay: 1
   
 logging:
   level: "INFO"
   format: "{time} | {level} | {message}"
+  file: "logs/vectorstream.log"
 
 monitoring:
   prometheus_port: 9090
   health_check_interval: 30
+  metrics:
+    enable_custom_metrics: true
+    throughput_window: 60
+    latency_percentiles: [50, 95, 99]

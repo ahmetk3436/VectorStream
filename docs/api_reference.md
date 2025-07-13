@@ -1,24 +1,15 @@
-# VectorStream: E-Ticaret Davranış Analizi - API Referansı
+# API Referansı
 
 ## Genel Bakış
 
-**NewMind AI Şirketi MLOps Task Çözümü**
-
-Bu dokümantasyon, NewMind AI şirketi tarafından verilen "VectorStream: Gerçek Zamanlı E-Ticaret Davranış Analizi Pipeline'ı" task'ının API endpoint'lerini, health check mekanizmalarını ve monitoring araçlarını detaylandırır. Sistem, production-ready monitoring ve observability için FastAPI framework'ü kullanarak comprehensive health checks ve metrics collection sağlar.
-
-### Task Monitoring Gereksinimleri
-- **Health Checks**: Sistem bileşenlerinin durumu (Kafka, Qdrant, System)
-- **Performance Metrics**: Throughput, latency, error rates
-- **GPU Monitoring**: RAPIDS cuML resource utilization
-- **Business Metrics**: E-ticaret event processing analytics
-
-NewMind AI sistemi, sağlık kontrolü ve metrik toplama için RESTful API endpoint'leri sağlar. Bu API'ler sistem durumunu izlemek, performans metriklerini toplamak ve Kubernetes ortamında liveness/readiness probe'ları için kullanılır.
+VectorStream sistemi, sağlık kontrolü, metrik toplama ve DLQ yönetimi için RESTful API endpoint'leri sağlar. Bu API'ler demo sırasında sistem durumunu izlemek ve yönetmek için kullanılır.
 
 ## Base URL
 
 ```
 Health Check Server: http://localhost:8080
 Metrics Server: http://localhost:9090
+DLQ Management: http://localhost:8080/dlq
 ```
 
 ## Sağlık Kontrolü Endpoint'leri
@@ -38,26 +29,538 @@ Metrics Server: http://localhost:9090
       "service": "kafka",
       "status": "healthy",
       "message": "Kafka connection successful",
-      "timestamp": 1640995200.123
+      "timestamp": 1640995200.123,
+      "details": {
+        "bootstrap_servers": "localhost:9092",
+        "topics": ["ecommerce-events"],
+        "consumer_lag": 0
+      }
     },
     {
       "service": "qdrant",
       "status": "healthy",
       "message": "Qdrant connection successful",
-      "timestamp": 1640995200.456
+      "timestamp": 1640995200.456,
+      "details": {
+        "host": "localhost:6333",
+        "collection": "ecommerce_embeddings",
+        "vector_count": 1500,
+        "index_status": "green"
+      }
     },
     {
       "service": "system",
       "status": "healthy",
       "message": "System resources within normal limits",
-      "timestamp": 1640995200.789
+      "timestamp": 1640995200.789,
+      "details": {
+        "cpu_usage": 45.2,
+        "memory_usage": 67.8,
+        "disk_usage": 23.1
+      }
     }
-  ]
+  ],
+  "uptime": 3661.45,
+  "version": "1.0.0"
 }
 ```
 
 **HTTP Status Kodları:**
 - `200`: Sistem sağlıklı veya kısmen sağlıklı
+- `503`: Sistem sağlıksız
+
+### 2. Servis Bazlı Sağlık Kontrolü
+
+**Endpoint:** `GET /health/{service}`
+
+**Parametreler:**
+- `service`: kafka, qdrant, system
+
+**Açıklama:** Belirli bir servisin detaylı sağlık durumunu döndürür.
+
+**Response:**
+```json
+{
+  "service": "kafka",
+  "status": "healthy",
+  "message": "All checks passed",
+  "timestamp": 1640995200.123,
+  "checks": [
+    {
+      "name": "connection",
+      "status": "healthy",
+      "message": "Connected to bootstrap servers"
+    },
+    {
+      "name": "topics",
+      "status": "healthy",
+      "message": "All required topics available"
+    },
+    {
+      "name": "consumer_lag",
+      "status": "healthy",
+      "message": "Consumer lag within acceptable limits"
+    }
+  ]
+}
+```
+
+### 3. Sistem Metrikleri
+
+**Endpoint:** `GET /metrics`
+
+**Açıklama:** Prometheus formatında sistem metriklerini döndürür.
+
+**Response:** (Prometheus format)
+```
+# HELP kafka_messages_processed_total Total number of Kafka messages processed
+# TYPE kafka_messages_processed_total counter
+kafka_messages_processed_total{topic="ecommerce-events",status="success"} 1542
+
+# HELP qdrant_embeddings_written_total Total number of embeddings written to Qdrant
+# TYPE qdrant_embeddings_written_total counter
+qdrant_embeddings_written_total{collection="ecommerce_embeddings"} 1489
+
+# HELP system_cpu_usage Current CPU usage percentage
+# TYPE system_cpu_usage gauge
+system_cpu_usage 45.2
+
+# HELP processing_duration_seconds Time spent processing messages
+# TYPE processing_duration_seconds histogram
+processing_duration_seconds_bucket{le="0.1"} 890
+processing_duration_seconds_bucket{le="0.5"} 1200
+processing_duration_seconds_bucket{le="1.0"} 1450
+processing_duration_seconds_bucket{le="+Inf"} 1542
+```
+
+## Dead Letter Queue (DLQ) API'leri
+
+### 1. DLQ İstatistikleri
+
+**Endpoint:** `GET /dlq/stats`
+
+**Açıklama:** DLQ sistem istatistiklerini döndürür.
+
+**Response:**
+```json
+{
+  "total_failed": 15,
+  "in_retry_queue": 3,
+  "ready_for_retry": 1,
+  "failure_reasons": {
+    "processing_error": 8,
+    "timeout_error": 4,
+    "validation_error": 3
+  },
+  "dlq_path": "/data/dlq",
+  "config": {
+    "max_retries": 3,
+    "retry_delays": [60, 300, 900],
+    "enable_retry": true,
+    "batch_size": 100
+  }
+}
+```
+
+### 2. DLQ Mesajlarını Listele
+
+**Endpoint:** `GET /dlq/messages`
+
+**Query Parametreleri:**
+- `limit` (int): Maksimum mesaj sayısı (varsayılan: 10)
+- `offset` (int): Başlangıç offset (varsayılan: 0)
+- `status` (string): failed, retry
+- `reason` (string): Hata nedeni filtresi
+
+**Response:**
+```json
+{
+  "messages": [
+    {
+      "id": "dlq_001",
+      "original_topic": "ecommerce-events",
+      "failure_reason": "processing_error",
+      "error_details": "JSON parsing failed",
+      "attempt_count": 2,
+      "first_failure_time": "2024-01-15T10:00:00Z",
+      "last_failure_time": "2024-01-15T10:05:00Z",
+      "retry_after": "2024-01-15T10:10:00Z",
+      "original_message": {
+        "user_id": "user123",
+        "action": "purchase",
+        "product_id": "prod456"
+      }
+    }
+  ],
+  "total_count": 15,
+  "has_more": true
+}
+```
+
+### 3. DLQ Mesajı Replay
+
+**Endpoint:** `POST /dlq/replay/{message_id}`
+
+**Request Body:**
+```json
+{
+  "target_topic": "ecommerce-events-replay"  // Opsiyonel
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Message replayed successfully",
+  "replayed_to_topic": "ecommerce-events",
+  "replay_timestamp": "2024-01-15T10:15:00Z"
+}
+```
+
+### 4. Toplu DLQ Replay
+
+**Endpoint:** `POST /dlq/replay/batch`
+
+**Request Body:**
+```json
+{
+  "message_ids": ["dlq_001", "dlq_002", "dlq_003"],
+  "target_topic": "ecommerce-events-replay",
+  "filter": {
+    "reason": "processing_error",
+    "max_retry_count": 2
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "total_attempted": 3,
+  "successful": 2,
+  "failed": 1,
+  "results": [
+    {
+      "message_id": "dlq_001",
+      "success": true,
+      "replay_timestamp": "2024-01-15T10:15:00Z"
+    },
+    {
+      "message_id": "dlq_002",
+      "success": true,
+      "replay_timestamp": "2024-01-15T10:15:01Z"
+    },
+    {
+      "message_id": "dlq_003",
+      "success": false,
+      "error": "Message not found"
+    }
+  ]
+}
+```
+
+### 5. Manuel DLQ Mesajı Ekleme
+
+**Endpoint:** `POST /dlq/messages`
+
+**Request Body:**
+```json
+{
+  "original_topic": "ecommerce-events",
+  "original_partition": 0,
+  "original_offset": 12345,
+  "original_key": "user123",
+  "original_value": "{\"user_id\":\"user123\",\"action\":\"purchase\"}",
+  "failure_reason": "processing_error",
+  "error_message": "Manual DLQ entry for testing"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message_id": "dlq_004",
+  "created_at": "2024-01-15T10:20:00Z"
+}
+```
+
+## Konfigürasyon API'leri
+
+### 1. Sistem Konfigürasyonu
+
+**Endpoint:** `GET /config`
+
+**Response:**
+```json
+{
+  "kafka": {
+    "bootstrap_servers": "localhost:9092",
+    "topic": "ecommerce-events",
+    "group_id": "vectorstream-consumer",
+    "auto_offset_reset": "latest"
+  },
+  "qdrant": {
+    "host": "localhost",
+    "port": 6333,
+    "collection_name": "ecommerce_embeddings",
+    "vector_size": 384
+  },
+  "dlq": {
+    "max_retries": 3,
+    "retry_delays": [60, 300, 900],
+    "enable_retry": true
+  },
+  "monitoring": {
+    "health_check_interval": 30,
+    "metrics_collection_interval": 10
+  }
+}
+```
+
+### 2. Konfigürasyon Güncelleme
+
+**Endpoint:** `PUT /config/{section}`
+
+**Request Body:**
+```json
+{
+  "max_retries": 5,
+  "retry_delays": [30, 120, 300, 600, 1800],
+  "enable_retry": true,
+  "batch_size": 50
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "DLQ configuration updated successfully",
+  "updated_at": "2024-01-15T10:25:00Z"
+}
+```
+
+## İzleme ve Operasyonel API'ler
+
+### 1. Sistem Logları
+
+**Endpoint:** `GET /logs`
+
+**Query Parametreleri:**
+- `level` (string): debug, info, warning, error
+- `since` (string): ISO timestamp
+- `limit` (int): Maksimum log sayısı
+
+**Response:**
+```json
+{
+  "logs": [
+    {
+      "timestamp": "2024-01-15T10:30:00Z",
+      "level": "error",
+      "logger": "dlq_manager",
+      "message": "Failed to process message: JSON parsing error",
+      "context": {
+        "message_id": "msg_001",
+        "topic": "ecommerce-events"
+      }
+    }
+  ]
+}
+```
+
+### 2. Performans İstatistikleri
+
+**Endpoint:** `GET /stats/performance`
+
+**Response:**
+```json
+{
+  "throughput": {
+    "messages_per_second": 125.5,
+    "embeddings_per_second": 118.2
+  },
+  "latency": {
+    "avg_processing_time_ms": 45.2,
+    "p95_processing_time_ms": 120.5,
+    "p99_processing_time_ms": 250.1
+  },
+  "error_rates": {
+    "total_errors": 15,
+    "error_rate_percent": 0.97,
+    "retry_success_rate": 75.0
+  }
+}
+```
+
+### 3. Kaynak Kullanımı
+
+**Endpoint:** `GET /stats/resources`
+
+**Response:**
+```json
+{
+  "cpu": {
+    "usage_percent": 45.2,
+    "cores": 8
+  },
+  "memory": {
+    "used_mb": 1024,
+    "total_mb": 4096,
+    "usage_percent": 25.0
+  },
+  "disk": {
+    "used_gb": 15.5,
+    "total_gb": 100,
+    "usage_percent": 15.5
+  },
+  "network": {
+    "bytes_in": 1048576,
+    "bytes_out": 524288
+  }
+}
+```
+
+## Hata Kodları ve Yanıtları
+
+### HTTP Status Kodları
+
+- `200 OK`: İstek başarılı
+- `201 Created`: Kaynak başarıyla oluşturuldu
+- `400 Bad Request`: Geçersiz istek parametreleri
+- `401 Unauthorized`: Kimlik doğrulama gerekli
+- `403 Forbidden`: Yetkisiz erişim
+- `404 Not Found`: Kaynak bulunamadı
+- `429 Too Many Requests`: Oran sınırı aşıldı
+- `500 Internal Server Error`: Sunucu hatası
+- `503 Service Unavailable`: Servis kullanılamıyor
+
+### Hata Yanıt Formatı
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid message format",
+    "details": {
+      "field": "original_value",
+      "reason": "JSON parsing failed"
+    },
+    "timestamp": "2024-01-15T10:35:00Z",
+    "request_id": "req_12345"
+  }
+}
+```
+
+## Rate Limiting
+
+API'ler rate limiting ile korunmaktadır:
+
+- **Genel API'ler**: 100 istek/dakika
+- **DLQ İşlemleri**: 50 istek/dakika
+- **Toplu İşlemler**: 10 istek/dakika
+
+Rate limit aşıldığında `429 Too Many Requests` yanıtı döner:
+
+```json
+{
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Too many requests",
+    "retry_after": 60
+  }
+}
+```
+
+## Kimlik Doğrulama
+
+Production ortamında API'ler API key ile korunmaktadır:
+
+```bash
+curl -H "X-API-Key: your-api-key" http://localhost:8080/health
+```
+
+## SDK ve Client Kütüphaneleri
+
+### Python Client
+
+```python
+from vectorstream_client import VectorStreamClient
+
+client = VectorStreamClient(
+    base_url="http://localhost:8080",
+    api_key="your-api-key"
+)
+
+# Sağlık kontrolü
+health = client.health.get_status()
+
+# DLQ işlemleri
+dlq_stats = client.dlq.get_stats()
+messages = client.dlq.list_messages(limit=50)
+client.dlq.replay_message("dlq_001")
+```
+
+### JavaScript Client
+
+```javascript
+import { VectorStreamClient } from 'vectorstream-js-client';
+
+const client = new VectorStreamClient({
+  baseUrl: 'http://localhost:8080',
+  apiKey: 'your-api-key'
+});
+
+// Async/await kullanımı
+const health = await client.health.getStatus();
+const dlqStats = await client.dlq.getStats();
+```
+
+## WebSocket API'leri
+
+Gerçek zamanlı güncellemeler için WebSocket desteği:
+
+```javascript
+const ws = new WebSocket('ws://localhost:8080/ws/events');
+
+ws.onmessage = function(event) {
+  const data = JSON.parse(event.data);
+  console.log('Real-time event:', data);
+};
+```
+
+WebSocket mesaj formatları:
+
+```json
+{
+  "type": "health_update",
+  "data": {
+    "service": "kafka",
+    "status": "healthy",
+    "timestamp": "2024-01-15T10:40:00Z"
+  }
+}
+
+{
+  "type": "dlq_message",
+  "data": {
+    "action": "new_failed_message",
+    "message_id": "dlq_005",
+    "failure_reason": "timeout_error"
+  }
+}
+
+{
+  "type": "metrics_update",
+  "data": {
+    "messages_processed": 1543,
+    "error_count": 16,
+    "timestamp": "2024-01-15T10:40:00Z"
+  }
+}
+```
 - `503`: Sistem sağlıksız
 - `500`: Sağlık kontrolü hatası
 
@@ -188,154 +691,31 @@ system_cpu_usage_percent 45.2
 system_memory_usage_percent 67.8
 ```
 
-## Metrik Kategorileri
+## Demo İçin Önemli Metrikler
 
-### Kafka Metrikleri
-- `kafka_messages_processed_total`: İşlenen toplam mesaj sayısı
-- `kafka_messages_failed_total`: Başarısız mesaj sayısı
-- `kafka_consumer_lag`: Consumer lag değeri
-- `kafka_connection_status`: Bağlantı durumu
+### Temel Metrikler
+- `kafka_messages_processed_total`: İşlenen mesaj sayısı
+- `qdrant_operations_total`: Qdrant operasyon sayısı
+- `system_cpu_usage_percent`: CPU kullanımı
+- `system_memory_usage_percent`: Bellek kullanımı
 
-### Qdrant Metrikleri
-- `qdrant_operations_duration_seconds`: Operasyon süreleri
-- `qdrant_operations_total`: Toplam operasyon sayısı
-- `qdrant_search_results_total`: Arama sonuç sayısı
-- `qdrant_connection_status`: Bağlantı durumu
+### Sağlık Durumu
+- `healthy`: Servis sağlıklı
+- `unhealthy`: Servis sağlıksız
 
-### Embedding Metrikleri
-- `embedding_processing_duration_seconds`: Embedding işleme süreleri
-- `embedding_processing_total`: Toplam embedding sayısı
-- `embedding_errors_total`: Embedding hata sayısı
+## Demo İçin Hızlı Kullanım
 
-### Sistem Metrikleri
-- `system_cpu_usage_percent`: CPU kullanım yüzdesi
-- `system_memory_usage_percent`: Bellek kullanım yüzdesi
-- `system_disk_usage_percent`: Disk kullanım yüzdesi
-- `system_uptime_seconds`: Sistem çalışma süresi
-
-### Hata Metrikleri
-- `errors_total`: Toplam hata sayısı (component ve error_type etiketli)
-- `circuit_breaker_state`: Circuit breaker durumu
-- `retry_attempts_total`: Toplam retry denemesi
-
-## Hata Kodları ve Mesajları
-
-### HTTP Status Kodları
-- `200 OK`: İstek başarılı
-- `503 Service Unavailable`: Servis kullanılamıyor
-- `500 Internal Server Error`: Sunucu hatası
-
-### Sağlık Durumu Değerleri
-- `healthy`: Servis tamamen sağlıklı
-- `degraded`: Servis kısmen sağlıklı (uyarı seviyesi)
-- `unhealthy`: Servis sağlıksız (kritik seviye)
-- `error`: Sağlık kontrolü hatası
-
-## Kullanım Örnekleri
-
-### cURL ile Sağlık Kontrolü
+### Temel Komutlar
 ```bash
-# Genel sağlık durumu
+# Sistem sağlığını kontrol et
 curl http://localhost:8080/health
 
-# Liveness probe
-curl http://localhost:8080/health/live
-
-# Readiness probe
-curl http://localhost:8080/health/ready
-
-# Kafka sağlık kontrolü
-curl http://localhost:8080/health/kafka
-
-# Prometheus metrikleri
+# Prometheus metriklerini görüntüle
 curl http://localhost:9090/metrics
 ```
 
-### Python ile API Kullanımı
-```python
-import requests
-import json
-
-# Sağlık durumunu kontrol et
-response = requests.get('http://localhost:8080/health')
-health_data = response.json()
-
-print(f"Sistem durumu: {health_data['status']}")
-for check in health_data['checks']:
-    print(f"{check['service']}: {check['status']} - {check['message']}")
-
-# Metrikleri al
-metrics_response = requests.get('http://localhost:9090/metrics')
-print(metrics_response.text)
-```
-
-### Kubernetes Health Check Konfigürasyonu
-```yaml
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
-  - name: newmind-ai
-    image: newmind-ai:latest
-    livenessProbe:
-      httpGet:
-        path: /health/live
-        port: 8080
-      initialDelaySeconds: 30
-      periodSeconds: 10
-    readinessProbe:
-      httpGet:
-        path: /health/ready
-        port: 8080
-      initialDelaySeconds: 5
-      periodSeconds: 5
-```
-
-## Monitoring Entegrasyonu
-
-### Prometheus Konfigürasyonu
-```yaml
-scrape_configs:
-  - job_name: 'newmind-ai'
-    static_configs:
-      - targets: ['localhost:9090']
-    scrape_interval: 15s
-    metrics_path: /metrics
-```
-
-### Grafana Dashboard
-Metrikler Grafana dashboard'larında görselleştirilebilir:
-- Sistem performans metrikleri
-- Kafka mesaj işleme oranları
-- Qdrant operasyon süreleri
-- Hata oranları ve trend analizi
-
-## Güvenlik
-
-### Erişim Kontrolü
-- Health check endpoint'leri genellikle public erişime açıktır
-- Metrics endpoint'leri internal network'te tutulmalıdır
-- Production ortamında authentication/authorization eklenebilir
-
-### Rate Limiting
-- API endpoint'lerine rate limiting uygulanabilir
-- Özellikle metrics endpoint'leri için önemlidir
-
-## Sınırlamalar
-
-- Health check timeout'ları: 30 saniye
-- Metrics toplama sıklığı: 15 saniye
-- Maksimum eşzamanlı istek sayısı: 100
-- Response boyutu limiti: 10MB
-
-## Sorun Giderme
-
-### Yaygın Sorunlar
-1. **503 Service Unavailable**: Bağımlı servisler (Kafka/Qdrant) erişilemez
-2. **Timeout**: Network bağlantı sorunları
-3. **500 Internal Server Error**: Uygulama konfigürasyon hatası
-
-### Debug Bilgileri
-- Log seviyesini DEBUG'a ayarlayın
-- Health check detaylarını inceleyin
-- Metrics'teki hata sayılarını kontrol edin
+### Web Arayüzleri
+- **Grafana**: http://localhost:3000 (admin/admin123)
+- **Prometheus**: http://localhost:9090
+- **Kafka UI**: http://localhost:8090
+- **Qdrant Dashboard**: http://localhost:6333/dashboard

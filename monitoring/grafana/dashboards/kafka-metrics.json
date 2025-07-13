@@ -1,8 +1,8 @@
 {
   "dashboard": {
     "id": null,
-    "title": "NewMind AI - Kafka Metrikleri",
-    "tags": ["newmind-ai", "kafka", "messaging"],
+    "title": "VectorStream - Kafka Metrikleri",
+    "tags": ["vectorstream", "kafka", "messaging"],
     "style": "dark",
     "timezone": "browser",
     "panels": [
@@ -12,7 +12,7 @@
         "type": "stat",
         "targets": [
           {
-            "expr": "kafka_connection_status",
+            "expr": "up{job=\"kafka\"}",
             "refId": "A"
           }
         ],
@@ -61,7 +61,7 @@
         "type": "timeseries",
         "targets": [
           {
-            "expr": "rate(kafka_messages_processed_total[5m])",
+            "expr": "rate(kafka_consumer_records_consumed_total[5m])",
             "refId": "A",
             "legendFormat": "{{topic}}"
           }
@@ -87,9 +87,9 @@
         "type": "timeseries",
         "targets": [
           {
-            "expr": "rate(kafka_messages_failed_total[5m])",
+            "expr": "rate(kafka_consumer_fetch_manager_records_lag[5m])",
             "refId": "A",
-            "legendFormat": "{{topic}} - {{error_type}}"
+            "legendFormat": "Consumer Lag - {{topic}}"
           }
         ],
         "fieldConfig": {
@@ -113,7 +113,7 @@
         "type": "timeseries",
         "targets": [
           {
-            "expr": "kafka_consumer_lag",
+            "expr": "kafka_consumer_lag_sum",
             "refId": "A",
             "legendFormat": "{{topic}} - {{partition}}"
           }
@@ -139,7 +139,7 @@
         "type": "stat",
         "targets": [
           {
-            "expr": "sum(kafka_messages_processed_total)",
+            "expr": "sum(kafka_consumer_records_consumed_total)",
             "refId": "A"
           }
         ],

@@ -210,8 +210,32 @@ def circuit_breaker(
             cb = circuit_breaker_manager.get_circuit_breaker(name)
             if cb is None:
                 cb = circuit_breaker_manager.create_circuit_breaker(name, config)
-            loop = asyncio.get_event_loop()
-            return loop.run_until_complete(cb.call(func, *args, **kwargs))
+            
+            # Sync fonksiyonları için sadece basit circuit breaker logic'i uygula
+            # Event loop çakışmalarını önlemek için sync versiyonu kullan
+            try:
+                # Circuit breaker durumunu kontrol et
+                if cb.state == CircuitState.OPEN and not cb._should_attempt_reset():
+                    raise CircuitBreakerError(
+                        f"Circuit breaker '{cb.name}' açık. "
+                        f"Sonraki deneme: {cb.next_attempt_time - time.time():.1f} saniye sonra"
+                    )
+                
+                # Yarı açık durumda test için geç
+                if cb.state == CircuitState.OPEN and cb._should_attempt_reset():
+                    cb._half_open_circuit()
+                
+                # Fonksiyonu çağır
+                result = func(*args, **kwargs)
+                
+                # Başarı kaydı
+                cb._record_success()
+                return result
+                
+            except Exception as e:
+                # Hata kaydı
+                cb._record_failure(e)
+                raise
 
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
