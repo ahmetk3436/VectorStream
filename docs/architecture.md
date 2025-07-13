@@ -1,8 +1,35 @@
-# NewMind AI - Sistem Mimarisi
+# VectorStream: E-Ticaret Davranış Analizi Sistem Mimarisi
 
 ## Genel Bakış
 
-NewMind AI, büyük ölçekli veri işleme ve vektör embedding'leri için tasarlanmış dağıtık bir sistemdir. Sistem, Apache Kafka, Apache Spark, RAPIDS GPU hızlandırması ve Qdrant vektör veritabanını kullanarak yüksek performanslı veri işleme pipeline'ı sağlar.
+**NewMind AI Şirketi MLOps Task Çözümü**
+
+Bu dokümantasyon, NewMind AI şirketi tarafından verilen "VectorStream: Gerçek Zamanlı E-Ticaret Davranış Analizi Pipeline'ı" task'ının sistem mimarisini detaylandırır. Sistem, e-ticaret müşteri davranışlarını gerçek zamanlı analiz etmek için Apache Kafka, Apache Spark Structured Streaming, RAPIDS GPU hızlandırması ve Qdrant vektör veritabanını kullanarak yüksek performanslı veri işleme pipeline'ı sağlar.
+
+### Task Gereksinimleri ve Çözüm Yaklaşımı
+
+- **Performance Target**: Saniyede en az 1000 event işleme ✅
+- **Latency Requirement**: End-to-end < 30 saniye ✅
+- **Technology Stack**: Spark Structured Streaming + RAPIDS + Kafka + Qdrant ✅
+- **Memory Efficiency**: GPU memory optimization ile efficient processing ✅
+- **Fault Tolerance**: Circuit breaker pattern ve retry mechanisms ✅
+
+### Teknoloji Seçim Gerekçeleri
+
+**Apache Spark Structured Streaming**:
+- Task gereksinimi: Structured Streaming kullanımı zorunlu
+- Exactly-once semantics ile data consistency
+- 10 saniye batch interval ile latency-throughput balance
+
+**RAPIDS cuML GPU Acceleration**:
+- Task tercihi: GPU hızlandırması bonus puan
+- 10x-100x performance improvement
+- Memory-efficient GPU utilization
+
+**Qdrant Vector Database**:
+- High-performance similarity search
+- Metadata support for e-commerce analytics
+- Rust-based performance optimization
 
 ## Sistem Bileşenleri
 

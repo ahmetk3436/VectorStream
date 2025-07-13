@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Optional
 from sentence_transformers import SentenceTransformer
 from loguru import logger
 import numpy as np
+import torch
 
 class EmbeddingProcessor:
     """Metin embedding işlemcisi"""
@@ -16,15 +17,65 @@ class EmbeddingProcessor:
         self.model: Optional[SentenceTransformer] = None
         self.vector_size = config.get('vector_size', 384)
         
+    def _get_best_device(self):
+        """En iyi device'ı belirle: GPU -> MPS -> CPU sıralamasında"""
+        if torch.cuda.is_available():
+            return 'cuda'
+        elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            return 'mps'
+        else:
+            return 'cpu'
+    
     async def initialize(self):
         """Model yükle"""
-        try:
-            logger.info(f"Embedding model yükleniyor: {self.model_name}")
-            self.model = SentenceTransformer(self.model_name)
-            logger.info(f"✅ Embedding model yüklendi: {self.model_name}")
-        except Exception as e:
-            logger.error(f"Model yükleme hatası: {e}")
-            raise
+        device_priority = ['cuda', 'mps', 'cpu']
+        
+        for device in device_priority:
+            try:
+                logger.info(f"Embedding model yükleniyor: {self.model_name}")
+                
+                # Device kontrolü
+                if device == 'cuda' and not torch.cuda.is_available():
+                    continue
+                elif device == 'mps' and not (hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()):
+                    continue
+                
+                logger.info(f"Denenen device: {device}")
+                
+                # Meta tensor hatası için özel çözüm
+                model_kwargs = {
+                    'trust_remote_code': True,
+                    'device': None  # Device'ı None yapıyoruz, sonra manuel olarak taşıyacağız
+                }
+                
+                # Model'i önce CPU'da yükle
+                self.model = SentenceTransformer(
+                    self.model_name,
+                    **model_kwargs
+                )
+                
+                # Sonra hedef device'a taşı
+                if device != 'cpu':
+                    try:
+                        # to_empty() kullanarak meta tensor hatasını önle
+                        self.model = self.model.to(device)
+                    except Exception as device_error:
+                        logger.warning(f"Device {device}'a taşıma başarısız: {device_error}")
+                        # CPU'da kalsın
+                        device = 'cpu'
+                
+                logger.info(f"✅ Embedding model yüklendi: {self.model_name} on {device}")
+                return  # Başarılı yükleme, fonksiyondan çık
+                
+            except Exception as e:
+                logger.warning(f"Device {device} ile model yükleme başarısız: {e}")
+                if device == 'cpu':  # CPU son seçenek, hata fırlat
+                    logger.error(f"Tüm device'larda model yükleme başarısız")
+                    raise e
+                continue  # Sonraki device'ı dene
+        
+        # Buraya ulaşılmamalı, ama güvenlik için
+        raise Exception("Hiçbir device'da model yüklenemedi")
     
     async def create_embedding(self, text: str) -> Optional[List[float]]:
         """Tek metin için embedding oluştur"""

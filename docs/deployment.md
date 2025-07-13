@@ -1,8 +1,17 @@
-# NewMind AI - Deployment Rehberi
+# VectorStream: E-Ticaret Davranış Analizi - Deployment Rehberi
 
 ## Genel Bakış
 
-Bu rehber, NewMind AI sisteminin farklı ortamlarda nasıl deploy edileceğini açıklar. Sistem Docker containers ve Kubernetes orchestration kullanarak tasarlanmıştır.
+**NewMind AI Şirketi MLOps Task Çözümü**
+
+Bu dokümantasyon, NewMind AI şirketi tarafından verilen "VectorStream: Gerçek Zamanlı E-Ticaret Davranış Analizi Pipeline'ı" task'ının deployment işlemlerini detaylandırır. Sistem, task gereksinimlerine uygun olarak Docker Compose orchestration ve Kubernetes production deployment desteği ile tasarlanmıştır.
+
+### Task Deployment Gereksinimleri
+- **Docker Compose**: Tüm servislerin orkestrayonu (zorunlu)
+- **Performance**: 1000+ event/s processing capability
+- **GPU Support**: RAPIDS cuML için NVIDIA GPU integration
+- **Monitoring**: Health checks ve metrics collection
+- **Scalability**: Horizontal scaling capability
 
 ## Ön Gereksinimler
 

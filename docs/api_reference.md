@@ -1,6 +1,16 @@
-# NewMind AI API Referansı
+# VectorStream: E-Ticaret Davranış Analizi - API Referansı
 
 ## Genel Bakış
+
+**NewMind AI Şirketi MLOps Task Çözümü**
+
+Bu dokümantasyon, NewMind AI şirketi tarafından verilen "VectorStream: Gerçek Zamanlı E-Ticaret Davranış Analizi Pipeline'ı" task'ının API endpoint'lerini, health check mekanizmalarını ve monitoring araçlarını detaylandırır. Sistem, production-ready monitoring ve observability için FastAPI framework'ü kullanarak comprehensive health checks ve metrics collection sağlar.
+
+### Task Monitoring Gereksinimleri
+- **Health Checks**: Sistem bileşenlerinin durumu (Kafka, Qdrant, System)
+- **Performance Metrics**: Throughput, latency, error rates
+- **GPU Monitoring**: RAPIDS cuML resource utilization
+- **Business Metrics**: E-ticaret event processing analytics
 
 NewMind AI sistemi, sağlık kontrolü ve metrik toplama için RESTful API endpoint'leri sağlar. Bu API'ler sistem durumunu izlemek, performans metriklerini toplamak ve Kubernetes ortamında liveness/readiness probe'ları için kullanılır.
 
