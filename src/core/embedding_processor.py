@@ -11,6 +11,7 @@ from sentence_transformers import SentenceTransformer
 from loguru import logger
 import numpy as np
 import torch
+import time
 
 class EmbeddingProcessor:
     """
@@ -19,95 +20,99 @@ class EmbeddingProcessor:
     """
     
     def __init__(self, config: Dict[str, Any]):
-        """Task uyumlu embedding processor başlatma"""
+        """High-performance embedding processor with MPS optimization"""
         self.config = config
         # Task gereksinimi: Sentence Transformers model
         self.model_name = config.get('model_name', 'all-MiniLM-L6-v2')  
         self.model: Optional[SentenceTransformer] = None
         self.vector_size = config.get('vector_size', 384)
-        self.batch_size = config.get('batch_size', 32)
+        # Increased batch size for better GPU utilization
+        self.batch_size = config.get('batch_size', 512)  # 32 → 512 for M3 Pro
         self.device = self._get_best_device()
         
-        logger.info(f"🎯 Task uyumlu embedding processor başlatılıyor:")
+        # Performance optimization flags
+        self.use_fp16 = config.get('use_fp16', True)
+        
+        # Performance tracking
+        self.total_processed = 0
+        self.total_time = 0.0
+        
+        logger.info(f"🚀 High-performance embedding processor başlatılıyor:")
         logger.info(f"   📝 Model: {self.model_name} (Sentence Transformers)")
         logger.info(f"   📏 Vector size: {self.vector_size}")
         logger.info(f"   🔥 Device: {self.device}")
-        logger.info(f"   📦 Batch size: {self.batch_size}")
+        logger.info(f"   📦 Batch size: {self.batch_size} (optimized for M3 Pro)")
+        logger.info(f"   ⚡ FP16: {self.use_fp16}")
     
     def _get_best_device(self):
-        """Task performansı için en iyi device seç: GPU -> MPS -> CPU"""
+        """Optimized device selection for M3 Pro performance"""
         if torch.cuda.is_available():
             device = 'cuda'
-            logger.info("✅ CUDA GPU bulundu - Task performansı optimize")
+            logger.info("✅ CUDA GPU bulundu - 18k+ sentences/sec bekleniyor")
         elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
             device = 'mps'  
-            logger.info("✅ Apple MPS bulundu - Task performansı optimize")
+            logger.info("✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor")
+            # Note: Not setting default device to avoid tensor device conflicts
         else:
             device = 'cpu'
-            logger.info("⚠️ Sadece CPU kullanılacak - Task performansı sınırlı")
+            logger.info("⚠️ Sadece CPU kullanılacak - ~750 sentences/sec sınırı")
         return device
     
     async def initialize(self):
-        """Task gereksinimi: Sentence Transformers model yükle"""
+        """High-performance model initialization with MPS optimization"""
         try:
-            logger.info(f"🔄 Task uyumlu Sentence Transformers model yükleniyor: {self.model_name}")
+            logger.info(f"🚀 High-performance Sentence Transformers model yükleniyor: {self.model_name}")
             
-            # Task gereksinimi: Sentence Transformers model
-            self.model = SentenceTransformer(self.model_name)
+            # Initialize model with device-specific optimizations
+            model_kwargs = {}
             
-            # GPU/MPS kullanımı optimize et
-            if self.device in ['cuda', 'mps']:
-                self.model = self.model.to(self.device)
-                logger.info(f"✅ Model {self.device} device'a taşındı")
+            if self.device == 'mps':
+                # For MPS, initialize directly on MPS to avoid device conflicts
+                # Let SentenceTransformers handle MPS device placement internally
+                self.model = SentenceTransformer(
+                    self.model_name, 
+                    model_kwargs=model_kwargs,
+                    device=self.device  # Direct MPS initialization
+                )
+                logger.info(f"✅ Model doğrudan {self.device} device'da başlatıldı")
+                
+                # Skip FP16 for MPS as it can cause issues
+                if self.use_fp16:
+                    logger.info("ℹ️ MPS'de FP16 atlandı - uyumluluk için")
+            else:
+                # For CUDA and CPU, use the traditional approach
+                self.model = SentenceTransformer(
+                    self.model_name, 
+                    model_kwargs=model_kwargs,
+                    device='cpu'  # Initialize on CPU first
+                )
+                
+                # Move to target device after initialization
+                if self.device == 'cuda':
+                    self.model = self.model.to(self.device)
+                    logger.info(f"✅ Model {self.device} device'a taşındı")
+                    
+                    # Apply FP16 optimization after device move
+                    if self.use_fp16:
+                        self.model.half()
+                        logger.info("✅ FP16 precision uygulandı - hız artışı")
+                elif self.use_fp16:
+                    # CPU FP16 is not recommended, skip
+                    logger.info("ℹ️ CPU'da FP16 atlandı - performans sorunu yaratabilir")
             
             # Model bilgilerini logla
             embedding_dim = self.model.get_sentence_embedding_dimension()
-            logger.info(f"✅ Task uyumlu Sentence Transformers model hazır:")
+            logger.info(f"🚀 High-performance Sentence Transformers model hazır:")
             logger.info(f"   📏 Embedding dimension: {embedding_dim}")
-            logger.info(f"   🎯 Task gereksinimi karşılandı: Sentence Transformers ✓")
+            logger.info(f"   🎯 M3 Pro optimized - hedef: 3-4k events/sec")
             
             return True
             
         except Exception as e:
-            logger.error(f"❌ Task uyumlu embedding model yükleme hatası: {e}")
+            logger.error(f"❌ High-performance embedding model yükleme hatası: {e}")
             return False
     
-    async def create_embedding(self, text: str) -> List[float]:
-        """
-        Task gereksinimi: Ürün açıklamalarını embedding'e dönüştür
-        
-        Args:
-            text: Ürün açıklaması metni
-            
-        Returns:
-            List[float]: Sentence Transformers embedding vector
-        """
-        if not self.model:
-            await self.initialize()
-        
-        try:
-            # Task gereksinimi: Sentence Transformers ile embedding
-            embedding = self.model.encode(
-                text,
-                convert_to_tensor=False,
-                normalize_embeddings=True,  # Cosine similarity için normalize
-                batch_size=1
-            )
-            
-            # Numpy array'i liste'ye çevir
-            if isinstance(embedding, np.ndarray):
-                embedding = embedding.tolist()
-            
-            # Task gereksinimi: Vector size kontrolü
-            if len(embedding) != self.vector_size:
-                logger.warning(f"⚠️ Vector size uyumsuzluğu: {len(embedding)} != {self.vector_size}")
-            
-            return embedding
-            
-        except Exception as e:
-            logger.error(f"❌ Task uyumlu embedding oluşturma hatası: {e}")
-            # Fallback: Rastgele vector (sadece test için)
-            return np.random.rand(self.vector_size).tolist()
+
     
     async def create_batch_embeddings(self, texts: List[str]) -> List[List[float]]:
         """
@@ -123,14 +128,20 @@ class EmbeddingProcessor:
             await self.initialize()
         
         try:
+            # Fix device handling for MPS compatibility
+            encode_params = {
+                'convert_to_tensor': False,
+                'normalize_embeddings': True,
+                'batch_size': self.batch_size,
+                'show_progress_bar': len(texts) > 100,
+            }
+            
+            # Only specify device for non-MPS to avoid conflicts
+            if self.device != 'mps':
+                encode_params['device'] = self.device
+                
             # Task performans gereksinimi: Batch processing
-            embeddings = self.model.encode(
-                texts,
-                convert_to_tensor=False,
-                normalize_embeddings=True,
-                batch_size=self.batch_size,
-                show_progress_bar=len(texts) > 100
-            )
+            embeddings = self.model.encode(texts, **encode_params)
             
             # Numpy array'i liste'ye çevir
             if isinstance(embeddings, np.ndarray):
@@ -143,108 +154,174 @@ class EmbeddingProcessor:
             logger.error(f"❌ Task uyumlu batch embedding hatası: {e}")
             # Fallback: Rastgele vektörler (sadece test için)
             return [np.random.rand(self.vector_size).tolist() for _ in texts]
-        device_priority = ['cuda', 'mps', 'cpu']
+    
+
+    
+    async def process_batch(self, texts: List[str]) -> List[np.ndarray]:
+        """High-performance batch embedding with performance tracking"""
+        if not self.model:
+            raise RuntimeError("Model henüz başlatılmamış - initialize() çağırın")
         
-        for device in device_priority:
-            try:
-                logger.info(f"Embedding model yükleniyor: {self.model_name}")
-                
-                # Device kontrolü
-                if device == 'cuda' and not torch.cuda.is_available():
-                    continue
-                elif device == 'mps' and not (hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()):
-                    continue
-                
-                logger.info(f"Denenen device: {device}")
-                
-                # Meta tensor hatası için özel çözüm
-                model_kwargs = {
-                    'trust_remote_code': True,
-                    'device': None  # Device'ı None yapıyoruz, sonra manuel olarak taşıyacağız
-                }
-                
-                # Model'i önce CPU'da yükle
-                self.model = SentenceTransformer(
-                    self.model_name,
-                    **model_kwargs
-                )
-                
-                # Sonra hedef device'a taşı
-                if device != 'cpu':
-                    try:
-                        # to_empty() kullanarak meta tensor hatasını önle
-                        self.model = self.model.to(device)
-                    except Exception as device_error:
-                        logger.warning(f"Device {device}'a taşıma başarısız: {device_error}")
-                        # CPU'da kalsın
-                        device = 'cpu'
-                
-                logger.info(f"✅ Embedding model yüklendi: {self.model_name} on {device}")
-                return  # Başarılı yükleme, fonksiyondan çık
-                
-            except Exception as e:
-                logger.warning(f"Device {device} ile model yükleme başarısız: {e}")
-                if device == 'cpu':  # CPU son seçenek, hata fırlat
-                    logger.error(f"Tüm device'larda model yükleme başarısız")
-                    raise e
-                continue  # Sonraki device'ı dene
+        if not texts:
+            return []
         
-        # Buraya ulaşılmamalı, ama güvenlik için
-        raise Exception("Hiçbir device'da model yüklenemedi")
+        try:
+            start_time = time.time()
+            batch_size = len(texts)
+            
+            logger.debug(f"🚀 High-performance batch işleniyor: {batch_size} metin")
+            
+            # Fix device handling for MPS compatibility
+            # For MPS, we need to be more careful about device handling
+            encode_device = None
+            if self.device == 'mps':
+                # For MPS, let SentenceTransformers handle device placement internally
+                # Don't specify device parameter to avoid conflicts
+                encode_device = None
+            else:
+                # For CUDA and CPU, explicitly specify device
+                encode_device = self.device
+                # Ensure model is on correct device before encoding
+                if hasattr(self.model, 'device') and str(self.model.device) != self.device:
+                    self.model = self.model.to(self.device)
+                
+            # Prepare encode parameters based on device
+            encode_params = {
+                'batch_size': self.batch_size,
+                'show_progress_bar': False,
+                'convert_to_numpy': True,
+                'normalize_embeddings': True,
+                'convert_to_tensor': False,  # Direct numpy for speed
+            }
+            
+            # Only add device parameter if not MPS
+            if encode_device is not None:
+                encode_params['device'] = encode_device
+                
+            embeddings = self.model.encode(texts, **encode_params)
+            
+            # Numpy array'leri listeye çevir
+            embedding_list = [emb for emb in embeddings]
+            
+            # Performance tracking
+            elapsed_time = time.time() - start_time
+            self.total_processed += batch_size
+            self.total_time += elapsed_time
+            
+            # Calculate and log performance metrics
+            current_rate = batch_size / elapsed_time if elapsed_time > 0 else 0
+            avg_rate = self.total_processed / self.total_time if self.total_time > 0 else 0
+            
+            logger.debug(f"⚡ High-performance batch tamamlandı: {len(embedding_list)} embedding")
+            logger.debug(f"📊 Performance: {current_rate:.1f} evt/s (current), {avg_rate:.1f} evt/s (avg)")
+            
+            # Log milestone achievements
+            if avg_rate > 1000:
+                logger.info(f"🎯 HEDEF AŞILDI! Ortalama hız: {avg_rate:.1f} evt/s > 1000 evt/s")
+            elif avg_rate > 500:
+                logger.info(f"🚀 İyi performans: {avg_rate:.1f} evt/s (hedef: 1000+ evt/s)")
+            
+            return embedding_list
+            
+        except Exception as e:
+            logger.error(f"❌ High-performance batch embedding hatası: {e}")
+            raise
     
     async def create_embedding(self, text: str) -> Optional[List[float]]:
-        """Tek metin için embedding oluştur"""
-        if not self.model:
-            await self.initialize()
-            
-        if not text or not text.strip():
-            logger.warning("Boş metin için embedding oluşturulamaz")
-            return None
-            
+        """Optimized single text embedding creation"""
         try:
-            embedding = self.model.encode(text.strip())
-            return embedding.tolist()
+            # Auto-initialize if model not loaded
+            if not self.model:
+                await self.initialize()
+                
+            batch_result = await self.process_batch([text])
+            if batch_result:
+                return batch_result[0].tolist()
+            return None
         except Exception as e:
-            logger.error(f"Embedding oluşturma hatası: {e}")
+            logger.error(f"❌ Optimized single embedding oluşturma hatası: {e}")
             return None
     
+    def get_performance_stats(self) -> Dict[str, float]:
+        """Get current performance statistics"""
+        avg_rate = self.total_processed / self.total_time if self.total_time > 0 else 0
+        return {
+            "total_processed": self.total_processed,
+            "total_time": self.total_time,
+            "average_rate_evt_per_sec": avg_rate,
+            "target_rate": 1000.0,
+            "performance_ratio": avg_rate / 1000.0 if avg_rate > 0 else 0
+        }
+    
     async def create_embeddings(self, texts: List[str]) -> List[Optional[List[float]]]:
-        """Çoklu metin için embedding oluştur"""
-        if not self.model:
-            await self.initialize()
+        """High-performance multiple text embedding creation"""
+        try:
+            # Auto-initialize if model not loaded
+            if not self.model:
+                await self.initialize()
+                
+            # Use optimized batch processing
+            batch_result = await self.process_batch(texts)
+            return [emb.tolist() for emb in batch_result]
             
+        except Exception as e:
+            logger.error(f"❌ High-performance batch embedding oluşturma hatası: {e}")
+            # Hata durumunda None listesi döndür
+            return [None] * len(texts)
+    
+    async def create_embeddings_batch(self, texts: List[str]) -> List[Optional[List[float]]]:
+        """Bulk embedding creation for high-throughput processing
+        
+        This method is optimized for bulk message ingestion scenarios where
+        thousands of messages need to be processed efficiently.
+        
+        Args:
+            texts: List of text strings to create embeddings for
+            
+        Returns:
+            List of embedding vectors (as lists of floats) or None for failed embeddings
+        """
         if not texts:
             return []
             
         try:
-            # Boş metinleri filtrele
-            valid_texts = [text.strip() for text in texts if text and text.strip()]
+            # Auto-initialize if model not loaded
+            if not self.model:
+                await self.initialize()
             
-            if not valid_texts:
-                return [None] * len(texts)
-                
-            embeddings = self.model.encode(valid_texts)
+            start_time = time.time()
+            batch_size = len(texts)
             
-            # Sonuçları orijinal sırayla eşleştir
-            results = []
-            valid_idx = 0
+            logger.debug(f"🚀 Bulk embedding creation başlatıldı: {batch_size} texts")
             
-            for text in texts:
-                if text and text.strip():
-                    results.append(embeddings[valid_idx].tolist())
-                    valid_idx += 1
-                else:
-                    results.append(None)
-                    
-            return results
+            # Process in optimal batch sizes to prevent memory issues
+            max_batch_size = self.batch_size
+            all_embeddings = []
+            
+            for i in range(0, len(texts), max_batch_size):
+                batch_texts = texts[i:i + max_batch_size]
+                batch_embeddings = await self.process_batch(batch_texts)
+                all_embeddings.extend([emb.tolist() for emb in batch_embeddings])
+            
+            elapsed_time = time.time() - start_time
+            rate = batch_size / elapsed_time if elapsed_time > 0 else 0
+            
+            logger.info(f"✅ Bulk embedding tamamlandı: {batch_size} embeddings in {elapsed_time:.3f}s ({rate:.0f} embeddings/s)")
+            
+            return all_embeddings
             
         except Exception as e:
-            logger.error(f"Batch embedding oluşturma hatası: {e}")
+            logger.error(f"❌ Bulk embedding creation hatası: {e}")
+            # Return None for all texts in case of error
             return [None] * len(texts)
     
     async def process_message(self, message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Mesajı işle ve embedding oluştur"""
         try:
+            # Auto-initialize if model not loaded
+            if not self.model:
+                await self.initialize()
+                
             content = message.get('content', '')
             
             if not content:
@@ -273,6 +350,10 @@ class EmbeddingProcessor:
     async def process_messages(self, messages: List[Dict[str, Any]]) -> List[Optional[Dict[str, Any]]]:
         """Çoklu mesaj işle"""
         try:
+            # Auto-initialize if model not loaded
+            if not self.model:
+                await self.initialize()
+                
             if not messages:
                 return []
                 

@@ -1,5 +1,14 @@
-kafka-python
-qdrant-client
+# High-performance optimizations
+confluent-kafka>=2.3.0
+python-snappy>=0.6.1
+qdrant-client[grpc]>=1.7.0
+orjson>=3.9.0
+uvloop>=0.19.0
+onnxruntime>=1.16.0
+optimum[onnxruntime]>=1.15.0
+sentence-transformers>=2.2.2
+
+# Core dependencies
 pyspark
 numpy
 pandas
@@ -74,3 +83,4 @@ line-profiler
 
 # Additional async utilities
 anyio
+lz4

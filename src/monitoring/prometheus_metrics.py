@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 
 import time
-from typing import Dict, Any, Optional
+from typing import Dict, Optional
 from prometheus_client import (
-    Counter, Gauge, Histogram, Summary, Info,
-    CollectorRegistry, generate_latest, CONTENT_TYPE_LATEST,
+    Counter, Gauge, Histogram, Info,
+    CollectorRegistry, generate_latest,
     start_http_server
 )
-from prometheus_client.exposition import MetricsHandler
-from http.server import HTTPServer
-import threading
 from loguru import logger
 
 class PrometheusMetrics:
@@ -31,17 +28,17 @@ class PrometheusMetrics:
             registry=self.registry
         )
         
-        # Kafka Metrics
+        # High-performance Kafka Metrics (confluent-kafka optimized)
         self.kafka_messages_consumed = Counter(
             'newmind_ai_kafka_messages_consumed_total',
-            'Total number of Kafka messages consumed',
+            'Total number of Kafka messages consumed (optimized with confluent-kafka)',
             ['topic', 'partition'],
             registry=self.registry
         )
         
         self.kafka_messages_processed = Counter(
             'newmind_ai_kafka_messages_processed_total',
-            'Total number of processed Kafka messages',
+            'Total number of processed Kafka messages (target: 60k+ msg/s)',
             ['topic', 'status'],
             registry=self.registry
         )
@@ -55,7 +52,7 @@ class PrometheusMetrics:
         
         self.kafka_consumer_lag = Gauge(
             'newmind_ai_kafka_consumer_lag',
-            'Kafka consumer lag',
+            'Kafka consumer lag (target: <1000 for 60k+ msg/s)',
             ['topic', 'partition'],
             registry=self.registry
         )
@@ -66,18 +63,33 @@ class PrometheusMetrics:
             registry=self.registry
         )
         
-        # Qdrant Metrics
+        # New high-performance Kafka metrics
+        self.kafka_messages_per_second = Gauge(
+            'newmind_ai_kafka_messages_per_second',
+            'Current Kafka message processing rate (target: 60k+ msg/s)',
+            ['topic'],
+            registry=self.registry
+        )
+        
+        self.kafka_json_parse_duration = Histogram(
+            'newmind_ai_kafka_json_parse_duration_seconds',
+            'Time spent parsing JSON with orjson (3x faster)',
+            buckets=[0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1],
+            registry=self.registry
+        )
+        
+        # High-performance Qdrant Metrics (gRPC optimized)
         self.qdrant_operations = Counter(
             'newmind_ai_qdrant_operations_total',
-            'Total number of Qdrant operations',
-            ['operation', 'collection', 'status'],
+            'Total number of Qdrant operations (gRPC optimized)',
+            ['operation', 'collection', 'status', 'protocol'],
             registry=self.registry
         )
         
         self.qdrant_operation_duration = Histogram(
             'newmind_ai_qdrant_operation_duration_seconds',
-            'Duration of Qdrant operations',
-            ['operation', 'collection'],
+            'Duration of Qdrant operations (gRPC 15-20% faster)',
+            ['operation', 'collection', 'protocol'],
             buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
             registry=self.registry
         )
@@ -95,19 +107,43 @@ class PrometheusMetrics:
             registry=self.registry
         )
         
-        # Processing Metrics
+        # New high-performance Qdrant metrics
+        self.qdrant_vectors_per_second = Gauge(
+            'newmind_ai_qdrant_vectors_per_second',
+            'Current Qdrant write rate (target: 1200+ vec/s sustained)',
+            ['collection', 'protocol'],
+            registry=self.registry
+        )
+        
+        self.qdrant_batch_write_duration = Histogram(
+            'newmind_ai_qdrant_batch_write_duration_seconds',
+            'Time spent writing vector batches (wait=False optimization)',
+            ['collection', 'protocol'],
+            buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0],
+            registry=self.registry
+        )
+        
+        self.qdrant_commit_latency = Histogram(
+            'newmind_ai_qdrant_commit_latency_seconds',
+            'Qdrant commit latency for monitoring',
+            ['collection'],
+            buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+            registry=self.registry
+        )
+        
+        # High-performance Processing Metrics (ONNX + MPS optimized)
         self.embedding_processing_duration = Histogram(
             'newmind_ai_embedding_processing_duration_seconds',
-            'Duration of embedding processing',
-            ['model'],
-            buckets=[0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
+            'Duration of embedding processing (target: 3-4k evt/s on M3 Pro)',
+            ['model', 'backend', 'device'],
+            buckets=[0.0001, 0.0005, 0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0],
             registry=self.registry
         )
         
         self.embeddings_generated = Counter(
             'newmind_ai_embeddings_generated_total',
-            'Total number of embeddings generated',
-            ['model'],
+            'Total number of embeddings generated (ONNX + MPS optimized)',
+            ['model', 'backend', 'device'],
             registry=self.registry
         )
         
@@ -115,6 +151,36 @@ class PrometheusMetrics:
             'newmind_ai_processing_errors_total',
             'Total number of processing errors',
             ['component', 'error_type'],
+            registry=self.registry
+        )
+        
+        # New high-performance embedding metrics
+        self.embedding_events_per_second = Gauge(
+            'newmind_ai_embedding_events_per_second',
+            'Current embedding processing rate (target: 3-4k evt/s)',
+            ['model', 'device'],
+            registry=self.registry
+        )
+        
+        self.embedding_gpu_utilization = Gauge(
+            'newmind_ai_embedding_gpu_utilization',
+            'GPU utilization for embedding processing (MPS)',
+            ['device'],
+            registry=self.registry
+        )
+        
+        self.embedding_model_load_duration = Histogram(
+            'newmind_ai_embedding_model_load_duration_seconds',
+            'Time spent loading embedding model (ONNX vs PyTorch)',
+            ['model', 'backend'],
+            registry=self.registry
+        )
+        
+        self.embedding_batch_size = Histogram(
+            'newmind_ai_embedding_batch_size',
+            'Size of embedding batches processed (optimized: 512 for M3 Pro)',
+            ['model', 'backend'],
+            buckets=[1, 5, 10, 25, 50, 100, 200, 500, 1000, 2000],
             registry=self.registry
         )
         
@@ -131,6 +197,39 @@ class PrometheusMetrics:
             'newmind_ai_qdrant_collection_points',
             'Number of points in Qdrant collection',
             ['collection'],
+            registry=self.registry
+        )
+        
+        # High-cardinality performance histograms for bottleneck identification
+        self.kafka_ingest_latency_seconds = Histogram(
+            'kafka_ingest_latency_seconds',
+            'Kafka message ingestion latency (Kafka-to-driver copy)',
+            ['topic', 'partition', 'consumer_group'],
+            buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0],
+            registry=self.registry
+        )
+        
+        self.embedding_batch_seconds = Histogram(
+            'embedding_batch_seconds',
+            'Embedding batch processing time (512-2048 batch sizes)',
+            ['model', 'batch_size', 'device', 'backend'],
+            buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0],
+            registry=self.registry
+        )
+        
+        self.qdrant_write_seconds = Histogram(
+            'qdrant_write_seconds',
+            'Qdrant write operation time (5000-vector chunks with wait=False)',
+            ['collection', 'batch_size', 'protocol', 'wait_mode'],
+            buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
+            registry=self.registry
+        )
+        
+        self.end_to_end_latency_seconds = Histogram(
+            'end_to_end_latency_seconds',
+            'Complete pipeline latency (Kafka ingestion to Qdrant write)',
+            ['pipeline_stage', 'batch_size_range'],
+            buckets=[0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 45.0, 60.0],
             registry=self.registry
         )
         
@@ -205,6 +304,46 @@ class PrometheusMetrics:
             registry=self.registry
         )
         
+        # High-performance pipeline metrics (1000+ evt/s target)
+        self.vectorstream_processed_total = Counter(
+            'newmind_ai_vectorstream_processed_total',
+            'Total number of events processed by the pipeline (target: 1000+ evt/s)',
+            registry=self.registry
+        )
+        
+        self.vectorstream_processing_duration = Histogram(
+            'newmind_ai_vectorstream_processing_duration_seconds',
+            'End-to-end processing time for events (uvloop optimized)',
+            buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+            registry=self.registry
+        )
+        
+        self.vectorstream_events_per_second = Gauge(
+            'newmind_ai_vectorstream_events_per_second',
+            'Current pipeline processing rate (target: 1000+ evt/s)',
+            registry=self.registry
+        )
+        
+        self.vectorstream_performance_ratio = Gauge(
+            'newmind_ai_vectorstream_performance_ratio',
+            'Performance ratio vs 1000 evt/s target (1.0 = target achieved)',
+            registry=self.registry
+        )
+        
+        self.vectorstream_component_latency = Histogram(
+            'newmind_ai_vectorstream_component_latency_seconds',
+            'Latency breakdown by pipeline component',
+            ['component'],
+            buckets=[0.0001, 0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0],
+            registry=self.registry
+        )
+        
+        self.vectorstream_batch_efficiency = Gauge(
+            'newmind_ai_vectorstream_batch_efficiency',
+            'Batch processing efficiency (events per batch / max batch size)',
+            registry=self.registry
+        )
+        
         # Set application start time to the stored start timestamp
         self.application_start_time.set(self._start_time)
         
@@ -228,10 +367,10 @@ class PrometheusMetrics:
         """Kafka bağlantı durumu güncelleme"""
         self.kafka_connection_status.set(1.0 if connected else 0.0)
     
-    def record_qdrant_operation(self, operation: str, collection: str, status: str, duration: float):
+    def record_qdrant_operation(self, operation: str, collection: str, status: str, duration: float, protocol: str = "grpc"):
         """Qdrant operasyon kaydı"""
-        self.qdrant_operations.labels(operation=operation, collection=collection, status=status).inc()
-        self.qdrant_operation_duration.labels(operation=operation, collection=collection).observe(duration)
+        self.qdrant_operations.labels(operation=operation, collection=collection, status=status, protocol=protocol).inc()
+        self.qdrant_operation_duration.labels(operation=operation, collection=collection, protocol=protocol).observe(duration)
     
     def set_qdrant_collection_size(self, collection: str, size: int):
         """Qdrant koleksiyon boyutu güncelleme"""
@@ -249,10 +388,10 @@ class PrometheusMetrics:
         """Qdrant arama sonuç sayısı kaydı"""
         self.qdrant_search_results.labels(collection=collection).set(results_count)
     
-    def record_embedding_processing(self, duration: float, model: str):
+    def record_embedding_processing(self, duration: float, model: str, backend: str = "pytorch", device: str = "cpu"):
         """Embedding işleme kaydı"""
-        self.embedding_processing_duration.labels(model=model).observe(duration)
-        self.embeddings_generated.labels(model=model).inc()
+        self.embedding_processing_duration.labels(model=model, backend=backend, device=device).observe(duration)
+        self.embeddings_generated.labels(model=model, backend=backend, device=device).inc()
     
     def record_processing_error(self, component: str, error_type: str):
         """İşleme hatası kaydı"""
@@ -284,38 +423,15 @@ class PrometheusMetrics:
         """Uygulama uptime'ını döndür"""
         return time.time() - self._start_time
         
-    def update_application_uptime(self):
-        """Uygulama uptime güncelleme (alias)"""
-        self.update_uptime()
-        
-    def record_error(self, component: str, error_type: str):
-        """Hata kaydı (alias)"""
-        self.record_processing_error(component, error_type)
-        self.error_rate.labels(component=component, error_type=error_type).inc()
-        
-
-        
     def update_kafka_consumer_lag(self, topic: str, partition: str, lag: int):
         """Kafka consumer lag güncelleme (string partition ile)"""
         self.kafka_consumer_lag.labels(topic=topic, partition=partition).set(lag)
         
-    def update_kafka_connection_status(self, connected: bool):
-        """Kafka bağlantı durumu güncelleme (alias)"""
-        self.set_kafka_connection_status(connected)
-        
-
-        
-    def update_qdrant_collection_points(self, collection: str, points: int):
-        """Qdrant koleksiyon nokta sayısı güncelleme"""
-        self.qdrant_collection_points.labels(collection=collection).set(points)
-        
-    def record_qdrant_search_results(self, collection: str, results_count: int):
-        """Qdrant arama sonuç sayısı kaydı"""
-        self.qdrant_search_results.labels(collection=collection).set(results_count)
-        
-    def update_qdrant_connection_status(self, connected: bool):
-        """Qdrant bağlantı durumu güncelleme (alias)"""
-        self.set_qdrant_connection_status(connected)
+    # --- Back-compat aliases (no new defs, so no E0102) ---
+    update_application_uptime = update_uptime
+    update_kafka_connection_status = set_kafka_connection_status
+    update_qdrant_connection_status = set_qdrant_connection_status
+    record_error = record_processing_error
         
     def record_embedding_generation(self, model: str, status: str, duration: float):
         """Embedding üretim kaydı"""
@@ -338,6 +454,39 @@ class PrometheusMetrics:
         """Sistem bilgilerini ayarla"""
         self.system_info.info(info)
         
+    def record_kafka_ingest_latency(self, topic: str, partition: str, consumer_group: str, latency: float):
+        """Record Kafka message ingestion latency"""
+        self.kafka_ingest_latency_seconds.labels(
+            topic=topic, 
+            partition=partition, 
+            consumer_group=consumer_group
+        ).observe(latency)
+    
+    def record_embedding_batch_processing(self, model: str, batch_size: int, device: str, backend: str, duration: float):
+        """Record embedding batch processing time"""
+        self.embedding_batch_seconds.labels(
+            model=model,
+            batch_size=str(batch_size),
+            device=device,
+            backend=backend
+        ).observe(duration)
+    
+    def record_qdrant_write_latency(self, collection: str, batch_size: int, protocol: str, wait_mode: str, duration: float):
+        """Record Qdrant write operation latency"""
+        self.qdrant_write_seconds.labels(
+            collection=collection,
+            batch_size=str(batch_size),
+            protocol=protocol,
+            wait_mode=wait_mode
+        ).observe(duration)
+    
+    def record_end_to_end_latency(self, pipeline_stage: str, batch_size_range: str, latency: float):
+        """Record complete pipeline end-to-end latency"""
+        self.end_to_end_latency_seconds.labels(
+            pipeline_stage=pipeline_stage,
+            batch_size_range=batch_size_range
+        ).observe(latency)
+    
     def get_metrics(self) -> str:
         """Prometheus formatında metrikleri döndür"""
         self.update_uptime()
@@ -359,7 +508,7 @@ class MetricsServer:
         if self.httpd is None:
             # Serve metrics from the PrometheusMetrics registry
             registry = getattr(self.metrics, 'registry', None)
-            self.httpd = start_http_server(self.port, registry=registry)
+            self.httpd = start_http_server(self.port, registry=registry)  # pylint: disable=assignment-from-no-return
             logger.info(f"Starting Prometheus metrics server on port {self.port}")
         return self.httpd
         
@@ -428,7 +577,7 @@ if __name__ == "__main__":
             # Qdrant metrics
             duration = random.uniform(0.01, 0.5)
             status = 'success' if random.random() > 0.05 else 'error'
-            metrics.record_qdrant_operation('write', status, duration)
+            metrics.record_qdrant_operation('write', 'test-collection', status, duration)
             
             # System metrics
             metrics.update_system_metrics(

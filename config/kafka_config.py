@@ -7,7 +7,7 @@ class KafkaConfig:
     topic: str
     group_id: str
     auto_offset_reset: str = "latest"
-    batch_size: int = 100
+    batch_size: int = 5000
     
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]):

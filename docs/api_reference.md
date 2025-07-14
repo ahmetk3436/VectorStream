@@ -2,14 +2,14 @@
 
 ## Genel Bakış
 
-VectorStream sistemi, sağlık kontrolü, metrik toplama ve DLQ yönetimi için RESTful API endpoint'leri sağlar. Bu API'ler demo sırasında sistem durumunu izlemek ve yönetmek için kullanılır.
+NewMind AI sistemi, sağlık kontrolü, metrik toplama ve sistem yönetimi için RESTful API endpoint'leri sağlar. Bu API'ler demo sırasında sistem durumunu izlemek ve yönetmek için kullanılır.
 
 ## Base URL
 
 ```
-Health Check Server: http://localhost:8080
-Metrics Server: http://localhost:9090
-DLQ Management: http://localhost:8080/dlq
+Unified Server: http://localhost:8080
+Prometheus Metrics: http://localhost:8080/metrics
+System Information: http://localhost:8080/system
 ```
 
 ## Sağlık Kontrolü Endpoint'leri
@@ -24,86 +24,61 @@ DLQ Management: http://localhost:8080/dlq
 ```json
 {
   "status": "healthy|degraded|unhealthy",
-  "checks": [
-    {
-      "service": "kafka",
+  "timestamp": 1640995200.123,
+  "uptime_seconds": 3661.45,
+  "services": {
+    "kafka": {
       "status": "healthy",
-      "message": "Kafka connection successful",
-      "timestamp": 1640995200.123,
+      "response_time_ms": 45.2,
+      "message": "Kafka is healthy",
       "details": {
-        "bootstrap_servers": "localhost:9092",
-        "topics": ["ecommerce-events"],
-        "consumer_lag": 0
+        "bootstrap_servers": "localhost:9092"
       }
     },
-    {
-      "service": "qdrant",
+    "qdrant": {
       "status": "healthy",
-      "message": "Qdrant connection successful",
-      "timestamp": 1640995200.456,
+      "response_time_ms": 32.1,
+      "message": "Qdrant is healthy",
       "details": {
-        "host": "localhost:6333",
-        "collection": "ecommerce_embeddings",
-        "vector_count": 1500,
-        "index_status": "green"
+        "collections_count": 3
       }
     },
-    {
-      "service": "system",
+    "system": {
       "status": "healthy",
-      "message": "System resources within normal limits",
-      "timestamp": 1640995200.789,
+      "response_time_ms": 12.5,
+      "message": "System is healthy",
       "details": {
-        "cpu_usage": 45.2,
-        "memory_usage": 67.8,
-        "disk_usage": 23.1
+        "cpu_percent": 45.2,
+        "memory_percent": 67.8,
+        "disk_percent": 23.1,
+        "memory_available_gb": 8.5
       }
     }
-  ],
-  "uptime": 3661.45,
-  "version": "1.0.0"
+  }
 }
 ```
 
 **HTTP Status Kodları:**
 - `200`: Sistem sağlıklı veya kısmen sağlıklı
-- `503`: Sistem sağlıksız
+- `500`: Sağlık kontrolü hatası
 
-### 2. Servis Bazlı Sağlık Kontrolü
+### 2. Basit Sağlık Kontrolü
 
-**Endpoint:** `GET /health/{service}`
+**Endpoint:** `GET /health/simple`
 
-**Parametreler:**
-- `service`: kafka, qdrant, system
-
-**Açıklama:** Belirli bir servisin detaylı sağlık durumunu döndürür.
+**Açıklama:** Basit sağlık kontrolü - sadece OK/FAIL döndürür. Kubernetes liveness probe için idealdir.
 
 **Response:**
 ```json
 {
-  "service": "kafka",
-  "status": "healthy",
-  "message": "All checks passed",
-  "timestamp": 1640995200.123,
-  "checks": [
-    {
-      "name": "connection",
-      "status": "healthy",
-      "message": "Connected to bootstrap servers"
-    },
-    {
-      "name": "topics",
-      "status": "healthy",
-      "message": "All required topics available"
-    },
-    {
-      "name": "consumer_lag",
-      "status": "healthy",
-      "message": "Consumer lag within acceptable limits"
-    }
-  ]
+  "status": "ok"
 }
 ```
+
+**HTTP Status Kodları:**
+- `200`: Tüm servisler sağlıklı
+- `503`: En az bir servis sağlıksız
+- `500`: Sağlık kontrolü hatası
 
 ### 3. Sistem Metrikleri
 
@@ -342,86 +317,7 @@ processing_duration_seconds_bucket{le="+Inf"} 1542
 }
 ```
 
-## İzleme ve Operasyonel API'ler
 
-### 1. Sistem Logları
-
-**Endpoint:** `GET /logs`
-
-**Query Parametreleri:**
-- `level` (string): debug, info, warning, error
-- `since` (string): ISO timestamp
-- `limit` (int): Maksimum log sayısı
-
-**Response:**
-```json
-{
-  "logs": [
-    {
-      "timestamp": "2024-01-15T10:30:00Z",
-      "level": "error",
-      "logger": "dlq_manager",
-      "message": "Failed to process message: JSON parsing error",
-      "context": {
-        "message_id": "msg_001",
-        "topic": "ecommerce-events"
-      }
-    }
-  ]
-}
-```
-
-### 2. Performans İstatistikleri
-
-**Endpoint:** `GET /stats/performance`
-
-**Response:**
-```json
-{
-  "throughput": {
-    "messages_per_second": 125.5,
-    "embeddings_per_second": 118.2
-  },
-  "latency": {
-    "avg_processing_time_ms": 45.2,
-    "p95_processing_time_ms": 120.5,
-    "p99_processing_time_ms": 250.1
-  },
-  "error_rates": {
-    "total_errors": 15,
-    "error_rate_percent": 0.97,
-    "retry_success_rate": 75.0
-  }
-}
-```
-
-### 3. Kaynak Kullanımı
-
-**Endpoint:** `GET /stats/resources`
-
-**Response:**
-```json
-{
-  "cpu": {
-    "usage_percent": 45.2,
-    "cores": 8
-  },
-  "memory": {
-    "used_mb": 1024,
-    "total_mb": 4096,
-    "usage_percent": 25.0
-  },
-  "disk": {
-    "used_gb": 15.5,
-    "total_gb": 100,
-    "usage_percent": 15.5
-  },
-  "network": {
-    "bytes_in": 1048576,
-    "bytes_out": 524288
-  }
-}
-```
 
 ## Hata Kodları ve Yanıtları
 

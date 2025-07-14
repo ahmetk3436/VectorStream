@@ -174,27 +174,6 @@ services:
     networks:
       - newmind
 
-  # VectorStream Consumer Service  
-  vectorstream-consumer:
-    build: .
-    container_name: vectorstream-consumer
-    depends_on:
-      - kafka
-      - qdrant
-    environment:
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9093
-      - QDRANT_HOST=qdrant
-      - QDRANT_PORT=6333
-      - PYTHONPATH=/app
-    volumes:
-      - ./src:/app/src
-      - ./config:/app/config
-      - ./logs:/app/logs
-    networks:
-      - newmind
-    restart: unless-stopped
-    command: python src/main.py
-
 networks:
   newmind:
     driver: bridge

@@ -44,29 +44,19 @@
   "panels": [
     {
       "id": 1,
-      "title": "Kafka Bağlantı Durumu",
+      "title": "Pipeline Performansı (Hedef: 1000+ olay/sn)",
       "type": "stat",
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Sistem tarafından saniye başına işlenen olay sayısı.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "text": "BAĞLANTI YOK"
-                },
-                "1": {
-                  "color": "green",
-                  "text": "BAĞLI"
-                }
-              },
-              "type": "value"
-            }
-          ],
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -75,11 +65,16 @@
                 "value": 0
               },
               {
+                "color": "yellow",
+                "value": 500
+              },
+              {
                 "color": "green",
-                "value": 1
+                "value": 1000
               }
             ]
-          }
+          },
+          "unit": "reqps"
         },
         "overrides": []
       },
@@ -91,9 +86,9 @@
       },
       "options": {
         "colorMode": "background",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
-        "orientation": "horizontal",
+        "orientation": "auto",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -105,52 +100,55 @@
       },
       "targets": [
         {
-          "expr": "up{job=\"kafka\"}",
-          "legendFormat": "{{instance}}",
+          "expr": "sum(rate(newmind_ai_vectorstream_events_per_second[5m]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Anlık Oran (olay/sn)",
           "refId": "A"
         }
       ]
     },
     {
       "id": 2,
-      "title": "Mesaj Akış Oranı (msg/s)",
+      "title": "Bileşen Gecikme Süreleri (p95, ms)",
       "type": "timeseries",
-      "datasource": "${DS_PROMETHEUS}",
-      "description": "Topic bazında saniyede üretilen (produced) ve tüketilen (consumed) mesaj sayısı.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Veri akışındaki ana bileşenlerin 95. yüzdelik dilimdeki gecikme süreleri. (uvloop optimizasyonlu)",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisPlacement": "auto",
-            "barAlignment": 0,
+            "axisPlacement": "right",
             "drawStyle": "line",
             "fillOpacity": 15,
             "gradientMode": "opacity",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
             "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
+            "lineWidth": 2
           },
           "mappings": [],
-          "unit": "reqps"
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "ms"
         },
         "overrides": []
       },
@@ -163,7 +161,8 @@
       "options": {
         "legend": {
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
           "mode": "multi"
@@ -171,33 +170,45 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(kafka_producer_topic_records_produced_total{topic=~\"$topic\"}[5m])) by (topic)",
-          "legendFormat": "Üretilen - {{topic}}",
+          "expr": "histogram_quantile(0.95, sum(rate(newmind_ai_vectorstream_component_latency_seconds_bucket{component=\"kafka\"}[2m])) by (le)) * 1000",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Kafka (confluent-kafka)",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(kafka_consumer_topic_records_consumed_total{topic=~\"$topic\"}[5m])) by (topic)",
-          "legendFormat": "Tüketilen - {{topic}}",
+          "expr": "histogram_quantile(0.95, sum(rate(newmind_ai_vectorstream_component_latency_seconds_bucket{component=\"embedding\"}[2m])) by (le)) * 1000",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Embedding (ONNX+MPS)",
           "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(newmind_ai_vectorstream_component_latency_seconds_bucket{component=\"qdrant\"}[2m])) by (le)) * 1000",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Qdrant (gRPC)",
+          "refId": "C"
         }
       ]
     },
     {
-      "id": 4,
-      "title": "Tüketici Gecikmesi (Consumer Lag)",
+      "id": 3,
+      "title": "CPU Kullanımı (%)",
       "type": "timeseries",
-      "datasource": "${DS_PROMETHEUS}",
-      "description": "Tüketici gruplarının (consumer groups) topic'leri okurken ne kadar geride kaldığını gösterir. Yüksek bir değer, tüketicilerin üreticilere yetişemediğini gösterir.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "drawStyle": "bar",
-            "fillOpacity": 80,
+            "fillOpacity": 10,
             "gradientMode": "none",
-            "lineWidth": 0
+            "lineWidth": 1
           },
           "mappings": [],
           "thresholds": {
@@ -209,15 +220,15 @@
               },
               {
                 "color": "yellow",
-                "value": 1000
+                "value": 80
               },
               {
                 "color": "red",
-                "value": 10000
+                "value": 90
               }
             ]
           },
-          "unit": "short"
+          "unit": "percent"
         },
         "overrides": []
       },
@@ -238,27 +249,51 @@
       },
       "targets": [
         {
-          "expr": "sum(kafka_consumergroup_lag{consumergroup=~\"$consumergroup\", topic=~\"$topic\"}) by (consumergroup, topic)",
-          "legendFormat": "{{consumergroup}} - {{topic}}",
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"}[5m])) * 100)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "CPU - {{instance}}",
           "refId": "A"
         }
       ]
     },
     {
-      "id": 7,
-      "title": "JSON İşleme Performansı (orjson vs. Diğer)",
+      "id": 4,
+      "title": "Bellek Kullanımı (%)",
       "type": "timeseries",
-      "datasource": "${DS_PROMETHEUS}",
-      "description": "Kafka mesajlarındaki JSON verisinin parse edilme süresi ile toplam işlem süresinin karşılaştırması (p95). `orjson` gibi hızlı kütüphanelerin etkisini gösterir.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
-            "axisPlacement": "right"
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "lineWidth": 1
           },
-          "unit": "ms"
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
         },
         "overrides": []
       },
@@ -279,57 +314,62 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(newmind_ai_kafka_json_parse_duration_seconds_bucket[2m])) by (le)) * 1000",
-          "legendFormat": "JSON Parse (p95)",
+          "expr": "(1 - (node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"})) * 100",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Bellek - {{instance}}",
           "refId": "A"
-        },
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(newmind_ai_kafka_processing_duration_seconds_bucket[2m])) by (le)) * 1000",
-          "legendFormat": "Toplam İşlem (p95)",
-          "refId": "B"
         }
       ]
     },
     {
-      "id": 8,
-      "title": "Topic Bazında Mesaj Dağılımı",
-      "type": "piechart",
-      "datasource": "${DS_PROMETHEUS}",
-      "description": "Seçilen zaman aralığında tüketilen toplam mesajların topic'lere göre dağılımı.",
+      "id": 5,
+      "title": "Qdrant Toplam Vektör Sayısı",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Qdrant veritabanındaki koleksiyonlarda bulunan toplam vektör sayısı.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "gradientMode": "hue",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "spanNulls": true
+          },
+          "mappings": [],
           "unit": "short"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 16,
+        "h": 8,
         "w": 24,
         "x": 0,
         "y": 16
       },
       "options": {
-        "displayLabels": [
-          "name",
-          "percent",
-          "value"
-        ],
-        "pieType": "donut",
-        "reduceOptions": {
-          "calcs": [
-            "sum"
-          ],
-          "fields": "",
-          "values": false
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
         }
       },
       "targets": [
         {
-          "expr": "sum by (topic) (increase(kafka_consumer_topic_records_consumed_total{topic=~\"$topic\"}[$__range]))",
-          "legendFormat": "{{topic}}",
+          "expr": "sum(qdrant_collections_vectors_count{collection=~\"$collection\"}) by (collection)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "{{collection}}",
           "refId": "A"
         }
       ]
@@ -340,14 +380,14 @@
   "style": "dark",
   "tags": [
     "vectorstream",
-    "kafka",
+    "pipeline",
     "iyilestirilmis"
   ],
   "templating": {
     "list": [
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "All",
           "value": "$__all"
         },
@@ -355,13 +395,13 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "label_values(kafka_consumergroup_lag, topic)",
+        "definition": "label_values(up{job=\"vectorstream\"}, instance)",
         "hide": 0,
         "includeAll": true,
         "multi": true,
-        "name": "topic",
+        "name": "instance",
         "options": [],
-        "query": "label_values(kafka_consumergroup_lag, topic)",
+        "query": "label_values(up{job=\"vectorstream\"}, instance)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -370,7 +410,7 @@
       },
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "All",
           "value": "$__all"
         },
@@ -378,13 +418,13 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "label_values(kafka_consumergroup_lag, consumergroup)",
+        "definition": "label_values(qdrant_collections_vectors_count, collection)",
         "hide": 0,
         "includeAll": true,
         "multi": true,
-        "name": "consumergroup",
+        "name": "collection",
         "options": [],
-        "query": "label_values(kafka_consumergroup_lag, consumergroup)",
+        "query": "label_values(qdrant_collections_vectors_count, collection)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -399,7 +439,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Kafka: Detaylı Metrikler",
-  "uid": "kafka-metrics-v2",
-  "version": 1
+  "title": "VectorStream: Ana Performans Paneli",
+  "uid": "vectorstream-main-v2",
+  "version": 2
 }

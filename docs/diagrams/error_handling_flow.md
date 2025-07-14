@@ -66,13 +66,6 @@ flowchart TD
     THRESHOLD -->|Yes| ESCALATE[Escalate Alert]
     THRESHOLD -->|No| CONTINUE[Continue Monitoring]
     
-    %% Styling
-    classDef success fill:#99ff99
-    classDef error fill:#ff9999
-    classDef warning fill:#ffcc99
-    classDef process fill:#99ccff
-    classDef decision fill:#cc99ff
-    
     class SUCCESS,HEALTHY,CB_CLOSE success
     class LOG_INVALID,PROC_ERROR,STORE_ERROR,KAFKA_DOWN,QDRANT_DOWN,GRACEFUL_SHUTDOWN error
     class RETRY_KAFKA,RETRY_QDRANT,WAIT,BACKOFF,CB_WAIT warning

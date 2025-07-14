@@ -111,14 +111,16 @@ class HealthMonitor:
             if not self.qdrant_config:
                 raise Exception("Qdrant config not provided")
             
-            # Qdrant config handling
+            # Qdrant config handling - use gRPC port for high-performance
             host = self.qdrant_config.get('host') if isinstance(self.qdrant_config, dict) else getattr(self.qdrant_config, 'host', 'localhost')
-            port = self.qdrant_config.get('port') if isinstance(self.qdrant_config, dict) else getattr(self.qdrant_config, 'port', 6333)
+            port = self.qdrant_config.get('port') if isinstance(self.qdrant_config, dict) else getattr(self.qdrant_config, 'port', 6334)  # gRPC port
             
-            # Qdrant bağlantısını test et
+            # Qdrant bağlantısını test et (gRPC)
             client = QdrantClient(
                 host=host,
                 port=port,
+                grpc_port=port,
+                prefer_grpc=True,
                 timeout=5
             )
             
@@ -273,9 +275,18 @@ class HealthMonitor:
             ]
         }
     
+    async def check_all_services(self) -> Dict[str, HealthCheck]:
+        """Tüm servislerin sağlık durumunu kontrol et"""
+        try:
+            await self.run_all_checks()
+            return self.health_checks
+        except Exception as e:
+            logger.error(f"All services health check error: {e}")
+            return {}
+
     async def start_monitoring(self):
-        """Sürekli sağlık izlemeyi başlat"""
-        logger.info(f"Starting health monitoring with {self.check_interval}s interval")
+        """Sağlık izlemeyi başlat"""
+        logger.info("🏥 Health monitoring started")
         
         while True:
             try:
