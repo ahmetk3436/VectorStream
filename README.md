@@ -4,27 +4,6 @@
 
 🎯 **Apache Spark Structured Streaming + Kafka + Sentence Transformers + Qdrant** 
 
-## 📋 Project Overview
-
-This project implements a real-time data processing pipeline for e-commerce customer behavior analysis, fulfilling all MLOps task requirements:
-
-### 🎯 Task Requirements Met
-- ✅ **Apache Spark Structured Streaming** (mandatory)
-- ✅ **Kafka event streaming** with 10-second batch intervals  
-- ✅ **Sentence Transformers** for text embedding
-- ✅ **Qdrant vector database** for embedding storage
-- ✅ **RAPIDS GPU acceleration** (optional but implemented)
-- ✅ **Performance targets**: 1000+ events/sec, <30s latency
-- ✅ **Nested product structure** support
-
-### 🛍️ What It Does
-Real-time analysis of e-commerce customer interactions:
-- 🔍 Product views, cart additions, purchases
-- � Product description embedding generation
-- 🎯 Vector similarity search for recommendations
-- 📊 Real-time performance monitoring
-- 💾 Scalable storage and retrieval
-
 ## ⚡ Quick Start
 
 ### 1. Start Infrastructure Services
@@ -33,22 +12,15 @@ Real-time analysis of e-commerce customer interactions:
 docker-compose up -d
 ```
 
-### 2. Generate E-Commerce Events
+### 2. Generate E-Commerce Demo Events
 ```bash
 # Generate events matching task requirements
-python scripts/generate_ecommerce_data.py
+python scripts/live_event_demo.py --count 10000 --burst
 ```
 
 ### 3. Start VectorStream Pipeline
 ```bash
-# Start Apache Spark Structured Streaming pipeline
 python src/main.py
-```
-
-### 4. Performance Validation
-```bash
-# Validate task performance requirements
-python scripts/performance_test.py --test-type task-validation
 ```
 
 ## 🌐 Monitoring Interfaces
@@ -66,7 +38,7 @@ Access these dashboards to monitor the pipeline:
 - **Throughput**: Minimum 1000 events/second ✅
 - **Latency**: Maximum 30 seconds end-to-end ✅  
 - **Memory**: Efficient processing with monitoring ✅
-- **GPU**: RAPIDS acceleration when available ✅
+- **GPU**: RAPIDS acceleration when available ✅ (not tested)
 
 ### Event Structure (Task Compliant)
 ```json
@@ -133,13 +105,6 @@ graph TB
     LOG --> QW
     LOG --> EH
     
-    %% Styling
-    classDef kafka fill:#ff9999
-    classDef processing fill:#99ccff
-    classDef storage fill:#99ff99
-    classDef monitoring fill:#ffcc99
-    classDef config fill:#cc99ff
-    
     class K,KC,KUI kafka
     class EP,QW processing
     class Q storage
@@ -177,14 +142,6 @@ sequenceDiagram
     end
 ```
 
-### 🔧 Teknoloji Stack
-
-- **Apache Kafka**: E-ticaret event'lerini gerçek zamanlı toplar
-- **Apache Spark**: Event'leri işler ve embedding'e dönüştürür
-- **RAPIDS GPU**: Hızlı embedding üretimi için GPU kullanır
-- **Qdrant**: Vektörleri saklar ve benzerlik araması yapar
-- **Docker**: Tüm servisleri kolayca çalıştırır
-
 ### 📈 Veri Akışı
 
 ```
@@ -203,8 +160,8 @@ Detaylı sistem mimarisi diyagramları için: [docs/diagrams/](docs/diagrams/)
 
 | Metrik | Hedef | Sonuç | Durum |
 |--------|-------|-------|-------|
-| Throughput | 1000+ event/s | 101.57 event/s | ✅ |
-| Latency | <30 saniye | 37.27 ms | ✅ |
+| Throughput | 1000+ event/s | 1278.3 event/s | ✅ |
+| Latency | <30 saniye | 3.6s | ✅ |
 | Error Rate | <1% | 0.00% | ✅ |
 | GPU Kullanımı | Evet | Apple Silicon MPS | ✅ |
 
@@ -223,7 +180,7 @@ newmind-ai/
 ├── 🐳 docker-compose.yml     # Tüm servisler
 ├── 📦 scripts/               # Demo scriptleri
 │   ├── generate_ecommerce_data.py
-│   └── ecommerce_performance_test.py
+│   └── live_event_demo.py
 ├── 📊 src/                   # Ana kod
 │   ├── core/                 # Temel bileşenler
 │   └── main.py              # Ana uygulama
@@ -239,14 +196,14 @@ newmind-ai/
 docker-compose up -d
 ```
 
-### 2. E-ticaret Demo Verisi Üret
+### 2. E-ticaret Demo EVENT Verisi Üret
 ```bash
-python scripts/generate_ecommerce_data.py
+python scripts/live_event_demo.py --count 10000 --burst
 ```
 
-### 3. Performans Testi Çalıştır
+### 3. Eventlerin İşlenmesi İçin Sistemi Çalıştır
 ```bash
-python scripts/ecommerce_performance_test.py
+python src/main.py
 ```
 
 ## 🌐 Web Arayüzleri
@@ -255,27 +212,3 @@ python scripts/ecommerce_performance_test.py
 - **Qdrant Dashboard:** `http://localhost:6333/dashboard` - Vektör veritabanı
 - **Grafana:** `http://localhost:3000` - Performans metrikleri (admin/admin123)
 - **Spark UI:** `http://localhost:8080` - Spark cluster durumu
-
-## 🎬 Demo Senaryosu
-
-1. **E-ticaret Event'leri:** Ürün görüntüleme, sepete ekleme, satın alma
-2. **Gerçek Zamanlı İşleme:** Kafka → Spark → Qdrant pipeline
-3. **Performans Metrikleri:** Throughput, latency, error rate
-4. **Vektör Arama:** Benzer ürün önerileri
-
-## 🔧 Temel Komutlar
-
-```bash
-# Servisleri durdur
-docker-compose down
-
-# Servis durumlarını kontrol et
-docker-compose ps
-
-# Ana uygulamayı çalıştır
-python src/main.py
-```
-
----
-
-**🎉 Demo hazır! E-ticaret davranış analizi sistemi çalışıyor.**

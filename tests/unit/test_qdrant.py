@@ -45,7 +45,9 @@ class TestQdrantWriter(unittest.TestCase):
         # Verify client was created with correct parameters
         mock_client_class.assert_called_once_with(
             host=self.qdrant_config['host'],
-            port=self.qdrant_config['port']
+            port=6333,  # REST API port
+            grpc_port=6334,  # gRPC API port
+            prefer_grpc=True
         )
         
         self.assertEqual(writer.client, mock_client_instance)

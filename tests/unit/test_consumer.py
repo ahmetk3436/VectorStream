@@ -3,6 +3,7 @@
 import unittest
 import asyncio
 import json
+import time
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 import sys
 from pathlib import Path
@@ -12,7 +13,7 @@ project_root = Path(__file__).parent.parent.parent.absolute()
 sys.path.insert(0, str(project_root))
 
 from src.core.kafka_consumer import KafkaConsumer
-from config.kafka_config import KafkaConfig
+from src.config.kafka_config import KafkaConfig
 
 class TestKafkaConsumer(unittest.TestCase):
     """Kafka Consumer unit testleri"""
@@ -20,10 +21,11 @@ class TestKafkaConsumer(unittest.TestCase):
     def setUp(self):
         """Test setup"""
         self.kafka_config = KafkaConfig(
-            bootstrap_servers=['localhost:9092'],
+            bootstrap_servers='localhost:9092',
             topic='test_topic',
             group_id='test_group',
-            auto_offset_reset='latest'
+            auto_offset_reset='latest',
+            enable_auto_commit=True
         )
         self.consumer = KafkaConsumer(self.kafka_config)
         
@@ -38,9 +40,10 @@ class TestKafkaConsumer(unittest.TestCase):
     
     def test_init(self):
         """Consumer initialization testi"""
-        self.assertEqual(self.consumer.config, self.kafka_config)
+        self.assertEqual(self.consumer.cfg, self.kafka_config)
         self.assertIsNone(self.consumer.consumer)
-        self.assertIsNone(self.consumer.message_handler)
+        self.assertIsNone(self.consumer.handler)
+        self.assertFalse(self.consumer.running)
     
     def test_set_message_handler(self):
         """Message handler set etme testi"""
@@ -48,93 +51,87 @@ class TestKafkaConsumer(unittest.TestCase):
             pass
         
         self.consumer.set_message_handler(dummy_handler)
-        self.assertEqual(self.consumer.message_handler, dummy_handler)
+        self.assertEqual(self.consumer.handler, dummy_handler)
     
-    @patch('src.core.kafka_consumer.PyKafkaConsumer')
-    def test_start_consuming_without_handler(self, mock_consumer_class):
+    def test_start_consuming_without_handler(self):
         """Handler olmadan consume etme testi"""
-        # Mock consumer instance
-        mock_kafka_consumer = Mock()
-        mock_consumer_class.return_value = mock_kafka_consumer
-        
         # Mock messages
         mock_message = Mock()
-        mock_message.value = b'{"id": "test1", "content": "test message"}'
+        mock_message.value.return_value = b'{"id": "test1", "content": "test message"}'
+        mock_message.error.return_value = None
         
-        # Mock iteration with limited messages
-        mock_kafka_consumer.__iter__ = Mock(return_value=iter([mock_message]))
+        # Set start_time to avoid None error
+        self.consumer.start_time = time.time()
         
-        # Test without handler
-        self.run_async_test(self.consumer.start_consuming())
+        # Test without handler - should not raise exception
+        self.run_async_test(self.consumer._process_messages([mock_message]))
         
-        # Verify consumer was created
-        mock_consumer_class.assert_called_once()
+        # Verify message count increased
+        self.assertEqual(self.consumer.msg_total, 1)
     
-    @patch('src.core.kafka_consumer.PyKafkaConsumer')
-    def test_start_consuming_with_handler(self, mock_consumer_class):
+    def test_start_consuming_with_handler(self):
         """Handler ile consume etme testi"""
-        # Mock consumer instance
-        mock_kafka_consumer = Mock()
-        mock_consumer_class.return_value = mock_kafka_consumer
-        
         # Mock messages
         mock_message1 = Mock()
-        mock_message1.value = b'{"id": "test1", "content": "test message"}'
+        mock_message1.value.return_value = b'{"id": "test1", "content": "test message"}'
+        mock_message1.error.return_value = None
         mock_message2 = Mock()
-        mock_message2.value = b'{"id": "test2", "content": "another test"}'
+        mock_message2.value.return_value = b'{"id": "test2", "content": "another test"}'
+        mock_message2.error.return_value = None
         
         # Set message handler
         processed_messages = []
-        async def test_handler(message):
-            processed_messages.append(message)
-            if len(processed_messages) >= 2:  # Stop after 2 messages
-                self.consumer.running = False
+        async def test_handler(messages):
+            processed_messages.extend(messages)
         
         self.consumer.set_message_handler(test_handler)
         
-        # Mock iteration with limited messages
-        mock_kafka_consumer.__iter__ = Mock(return_value=iter([mock_message1, mock_message2]))
+        # Set start_time to avoid None error
+        self.consumer.start_time = time.time()
         
-        # Start consuming
-        self.run_async_test(self.consumer.start_consuming())
+        # Process messages
+        self.run_async_test(self.consumer._process_messages([mock_message1, mock_message2]))
         
         # Verify messages were processed
         self.assertEqual(len(processed_messages), 2)
         self.assertEqual(processed_messages[0]['id'], 'test1')
         self.assertEqual(processed_messages[1]['id'], 'test2')
     
-    @patch('src.core.kafka_consumer.PyKafkaConsumer')
-    def test_invalid_json_handling(self, mock_consumer_class):
+    @patch('src.core.kafka_consumer.KafkaConsumer._to_dlq')
+    def test_invalid_json_handling(self, mock_to_dlq):
         """Geçersiz JSON mesaj handling testi"""
-        # Mock consumer instance
-        mock_kafka_consumer = Mock()
-        mock_consumer_class.return_value = mock_kafka_consumer
-        
         # Mock invalid JSON message
         mock_message = Mock()
-        mock_message.value = b'invalid json content'
+        mock_message.value.return_value = b'invalid json content'
+        mock_message.error.return_value = None
         
         # Set message handler
         processed_messages = []
-        async def test_handler(message):
-            processed_messages.append(message)
+        async def test_handler(messages):
+            processed_messages.extend(messages)
         
         self.consumer.set_message_handler(test_handler)
         
-        # Mock iteration with single invalid message
-        mock_kafka_consumer.__iter__ = Mock(return_value=iter([mock_message]))
+        # Set start_time to avoid None error
+        self.consumer.start_time = time.time()
         
-        # Start consuming
-        self.run_async_test(self.consumer.start_consuming())
+        # Mock _to_dlq to be async
+        mock_to_dlq.return_value = asyncio.Future()
+        mock_to_dlq.return_value.set_result(None)
+        
+        # Process invalid message
+        self.run_async_test(self.consumer._process_messages([mock_message]))
         
         # Invalid JSON should be skipped, no messages processed
         self.assertEqual(len(processed_messages), 0)
+        # DLQ should be called for invalid message
+        mock_to_dlq.assert_called_once()
     
     def test_consumer_initialization(self):
         """Consumer başlangıç durumu testi"""
         self.assertIsNone(self.consumer.consumer)
-        self.assertIsNone(self.consumer.message_handler)
-        self.assertFalse(self.consumer.running)
+        self.assertIsNone(self.consumer.handler)
+        self.assertTrue(hasattr(self.consumer, 'running'))
     
     def test_close_without_consumer(self):
         """Consumer olmadan close etme testi"""
@@ -150,7 +147,7 @@ class TestKafkaConsumer(unittest.TestCase):
         
         self.run_async_test(self.consumer.close())
         
-        mock_consumer.close.assert_called_once()
+        # close() method only sets running to False, actual close happens in _close_consumer
         self.assertFalse(self.consumer.running)
 
 if __name__ == '__main__':

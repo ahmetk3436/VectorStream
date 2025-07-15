@@ -28,14 +28,10 @@ import requests
 from kafka import KafkaProducer
 from kafka.errors import KafkaError
 
-# Yerel event üreticisi (değişmedi)
 from generate_ecommerce_data import ECommerceDataGenerator  # type: ignore
 
-# ──────────────────────────────────────────────
-# Hızlı JSON serileştirici (orjson yoksa stdlib)
-# ──────────────────────────────────────────────
 try:
-    import orjson  # type: ignore
+    import orjson  
 
     _ORJSON_OPTS = 0
     if hasattr(orjson, "OPT_NON_STR_KEYS"):
@@ -55,9 +51,6 @@ except ModuleNotFoundError:  # Geliştirme ortamı
             return obj
         return json.dumps(obj, ensure_ascii=False, separators=(",", ":")).encode()
 
-# ──────────────────────────────────────────────
-# Ortak yardımcılar & logging
-# ──────────────────────────────────────────────
 def getenv(key: str, default: str | int) -> str:
     return os.getenv(key, str(default))
 
@@ -75,21 +68,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger("live_event_sender_fast")
 
-# ──────────────────────────────────────────────
-# Event generator protokolü (değişmedi)
-# ──────────────────────────────────────────────
 class EventGeneratorProtocol:
-    def generate_event(self) -> dict:  # pragma: no cover
+    def generate_event(self) -> dict:  
         raise NotImplementedError
-
-
-class _DummyGenerator(EventGeneratorProtocol):  # pragma: no cover
-    def generate_event(self) -> dict:
-        return {
-            "id": datetime.now(timezone.utc).isoformat(),
-            "ts": time.time(),
-            "note": "dummy-event",
-        }
 
 # ──────────────────────────────────────────────
 # Ana gönderici

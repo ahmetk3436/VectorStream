@@ -24,6 +24,10 @@ import os
 from pathlib import Path
 from datetime import datetime
 from loguru import logger
+from dotenv import load_dotenv
+
+# Load environment variables from .env file (DevOps requirement)
+load_dotenv()
 
 # Event loop optimizasyonu
 try:
@@ -62,8 +66,10 @@ class VectorStreamPipeline:
     - Performance targets: 1000+ events/sec, <30s latency
     """
     
-    def __init__(self, config_path: str = "config/app_config.yaml"):
-        self.config = self.load_config(config_path)
+    def __init__(self, config_path: str = None):
+        # Load configuration from environment variables (DevOps requirement)
+        from src.config.app_config import load_config
+        self.config = load_config(config_path)
         
         # Task requirement: Apache Spark Structured Streaming is mandatory
         self.use_spark = True
@@ -146,32 +152,19 @@ class VectorStreamPipeline:
         logger.info("="*60)
         
         # Task requirement: Qdrant writer for vector storage
-        # IPv4 zorlaması için Qdrant konfigürasyonunu güncelle
+        # Use environment-based Qdrant configuration (DevOps requirement)
         qdrant_config = self.config['qdrant'].copy()
+        # Convert localhost to 127.0.0.1 for IPv4 compatibility if needed
         if 'localhost' in qdrant_config.get('host', ''):
             qdrant_config['host'] = qdrant_config['host'].replace('localhost', '127.0.0.1')
         self.qdrant_writer = QdrantWriter(qdrant_config)
         
         # Task requirement: Sentence Transformers embedding processor
-        # Yüksek performans embedding konfigürasyonu
-        embedding_config = self.config.get('embedding', {
-            'model_name': 'all-MiniLM-L6-v2',  # Task requirement
-            'vector_size': 384,
-            'batch_size': 256,  # Yüksek performans için artırıldı
-            'device': 'cpu',
-            'normalize_embeddings': True,
-            'max_length': 512
-        })
-        # Performans optimizasyonları
-        embedding_config.update({
-            'batch_size': 256,
-            'use_fast_tokenizer': True,
-            'enable_caching': True
-        })
+        # Configuration from environment variables (DevOps requirement)
+        embedding_config = self.config.get('embedding', {})
         self.embedding_processor = EmbeddingProcessor(embedding_config)
         
-        # Health monitoring
-        # IPv4 zorlaması için health monitor konfigürasyonlarını güncelle
+        # Health monitoring with environment-based configuration (DevOps requirement)
         health_kafka_config = self.config['kafka'].copy()
         if 'localhost' in health_kafka_config.get('bootstrap_servers', ''):
             health_kafka_config['bootstrap_servers'] = health_kafka_config['bootstrap_servers'].replace('localhost', '127.0.0.1')
@@ -189,15 +182,9 @@ class VectorStreamPipeline:
         self.unified_server = UnifiedServer(self.metrics, self.health_monitor)
         
         # Task requirement: Apache Spark Structured Streaming (mandatory)
-        # Yüksek performans Spark konfigürasyonu
+        # Configuration from environment variables (DevOps requirement)
         spark_config = self.config.get('spark', {})
         spark_config.update({
-            'app_name': 'VectorStream-MLOps-Pipeline',
-            'batch_interval': '5 seconds',  # Yüksek performans için azaltıldı
-            'trigger_interval': '500 milliseconds',  # Daha hızlı tetikleme
-            'max_offsets_per_trigger': 100000,  # Daha fazla mesaj işleme
-            'checkpoint_location': '/tmp/spark-checkpoint-vectorstream',
-            # Performans optimizasyonları
             'spark.sql.adaptive.enabled': 'true',
             'spark.sql.adaptive.coalescePartitions.enabled': 'true',
             'spark.sql.shuffle.partitions': '200',
@@ -376,9 +363,13 @@ class VectorStreamPipeline:
         self.metrics.set_qdrant_connection_status(True)
         logger.info("✅ Qdrant vector database initialized")
         
-        # Start unified API server in background
+        # Start unified API server in background with environment configuration
+        api_config = self.config.get('api', {})
         def run_server():
-            self.unified_server.start_server(host="127.0.0.1", port=8080)
+            self.unified_server.start_server(
+                host=api_config.get('host', '127.0.0.1'), 
+                port=api_config.get('port', 8080)
+            )
         
         self.server_thread = threading.Thread(target=run_server, daemon=True)
         self.server_thread.start()

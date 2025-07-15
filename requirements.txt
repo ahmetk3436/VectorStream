@@ -19,6 +19,7 @@ loguru
 aiofiles
 aiohttp
 asyncio
+python-dotenv>=1.0.0
 
 # Web framework and server
 fastapi
@@ -62,7 +63,6 @@ torch
 torchvision
 
 # Additional required packages
-concurrent-futures
 transformers
 
 # Additional Spark dependencies

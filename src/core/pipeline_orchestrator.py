@@ -836,7 +836,21 @@ class PipelineOrchestrator:
         """Setup graceful shutdown signal handlers"""
         def signal_handler(signum, frame):
             logger.info(f"📡 Received signal {signum}, initiating graceful shutdown...")
-            asyncio.create_task(self._trigger_shutdown())
+            try:
+                # Try to get the running event loop
+                loop = asyncio.get_running_loop()
+                # Create task in the existing loop
+                loop.create_task(self._trigger_shutdown())
+            except RuntimeError:
+                # No running event loop, set shutdown event directly
+                logger.info("No running event loop, setting shutdown event directly")
+                self.shutdown_event.set()
+                try:
+                    import atexit
+                    atexit._clear()
+                    logger.debug("🧹 Atexit callbacks cleared")
+                except Exception as e:
+                    logger.debug(f"Could not clear atexit callbacks: {e}")
         
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
@@ -874,6 +888,17 @@ class PipelineOrchestrator:
                     logger.info(f"🔄 Flushing final batch of {len(self.embedding_batch)} embeddings...")
                     await self._flush_batch()
             
+            # Close embedding processor (may contain Spark session)
+            if self.embedding_processor:
+                try:
+                    if hasattr(self.embedding_processor, 'close'):
+                        await self.embedding_processor.close()
+                    elif hasattr(self.embedding_processor, 'stop'):
+                        self.embedding_processor.stop()
+                    logger.info("🧠 Embedding processor closed")
+                except Exception as e:
+                    logger.warning(f"Error closing embedding processor: {e}")
+            
             # Close Qdrant writer
             if self.qdrant_writer:
                 await self.qdrant_writer.close()
@@ -883,6 +908,22 @@ class PipelineOrchestrator:
             if self.unified_server:
                 self.unified_server.stop()
                 logger.info("🌐 API server stopped")
+            
+            # Clean up any remaining temporary resources
+            try:
+                import gc
+                gc.collect()
+                logger.debug("🧹 Garbage collection completed")
+            except Exception as e:
+                logger.warning(f"Error during garbage collection: {e}")
+            
+            # Clean up atexit callbacks to prevent TemporaryDirectory cleanup errors
+            try:
+                import atexit
+                atexit._clear()
+                logger.debug("🧹 Atexit callbacks cleared during shutdown")
+            except Exception as e:
+                logger.debug(f"Could not clear atexit callbacks during shutdown: {e}")
             
             logger.info("✅ Pipeline shutdown completed")
             

@@ -479,5 +479,36 @@ class EmbeddingProcessor:
             logger.error(f"Task event işleme hatası: {e}")
             return None
 
+    async def close(self):
+        """Clean up resources and close the embedding processor"""
+        try:
+            logger.info("🧹 Embedding processor kapatılıyor...")
+            
+            # Clear model from memory
+            if self.model:
+                # Clear model cache
+                if hasattr(self.model, 'cpu'):
+                    self.model = self.model.cpu()
+                del self.model
+                self.model = None
+                logger.info("🗑️ Model memory'den temizlendi")
+            
+            # Clear torch cache if available
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                logger.debug("🗑️ CUDA cache temizlendi")
+            elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+                torch.mps.empty_cache()
+                logger.debug("🗑️ MPS cache temizlendi")
+            
+            # Force garbage collection
+            import gc
+            gc.collect()
+            
+            logger.info("✅ Embedding processor başarıyla kapatıldı")
+            
+        except Exception as e:
+            logger.warning(f"Embedding processor kapatma hatası: {e}")
+
 # Task uyumluluğu için alias
 SentenceTransformersEmbeddingProcessor = EmbeddingProcessor

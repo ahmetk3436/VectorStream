@@ -11,10 +11,15 @@ import time
 import sys
 import uuid
 import numpy as np
+import os
 from datetime import datetime, timedelta
 from typing import List, Dict, Any
 from kafka import KafkaProducer
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file (DevOps requirement)
+load_dotenv()
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -210,17 +215,21 @@ class ECommerceDataGenerator:
                 f.write(json.dumps(event, ensure_ascii=False) + '\n')
         print(f"✅ {len(events)} events saved to {filename}")
     
-    def send_to_kafka(self, events: List[Dict[str, Any]], topic: str = "ecommerce-events", 
-                     bootstrap_servers: str = "localhost:9092"):
+    def send_to_kafka(self, events: List[Dict[str, Any]], 
+                     topic: str = None, bootstrap_servers: str = None):
         """Send events to Kafka topic (Task requirement)"""
+        # Use environment variables (DevOps requirement)
+        topic = topic or os.getenv('KAFKA_TOPIC', 'ecommerce-events')
+        bootstrap_servers = bootstrap_servers or os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
+        
         try:
             producer = KafkaProducer(
                 bootstrap_servers=bootstrap_servers,
                 value_serializer=lambda v: json.dumps(v, ensure_ascii=False).encode('utf-8'),
                 key_serializer=lambda k: k.encode('utf-8') if k else None,
-                batch_size=16384,  # Optimize for performance
-                linger_ms=10,      # Small batching delay
-                compression_type='gzip'  # Reduce network usage
+                batch_size=int(os.getenv('KAFKA_BATCH_SIZE', '16384')),
+                linger_ms=10,
+                compression_type='gzip'
             )
             
             sent_count = 0
@@ -242,21 +251,26 @@ class ECommerceDataGenerator:
             print(f"❌ Kafka send error: {e}")
             print("💡 Make sure Kafka is running: docker-compose up -d")
     
-    def stream_to_kafka(self, events_per_second: int = 100, duration_seconds: int = 60,
-                       topic: str = "ecommerce-events", bootstrap_servers: str = "localhost:9092"):
+    def stream_to_kafka(self, events_per_second: int = None, duration_seconds: int = 60,
+                       topic: str = None, bootstrap_servers: str = None):
         """
         Stream events to Kafka at specified rate (Task performance requirement)
         Task requirement: At least 1000 events per second capability
         """
+        # Use environment variables (DevOps requirement)
+        topic = topic or os.getenv('KAFKA_TOPIC', 'ecommerce-events')
+        bootstrap_servers = bootstrap_servers or os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
+        events_per_second = events_per_second or int(os.getenv('PERFORMANCE_TARGET_EVENTS_PER_SEC', '100'))
+        
         try:
             producer = KafkaProducer(
                 bootstrap_servers=bootstrap_servers,
                 value_serializer=lambda v: json.dumps(v, ensure_ascii=False).encode('utf-8'),
                 key_serializer=lambda k: k.encode('utf-8') if k else None,
-                batch_size=16384,
+                batch_size=int(os.getenv('KAFKA_BATCH_SIZE', '16384')),
                 linger_ms=5,
                 compression_type='gzip',
-                buffer_memory=33554432  # 32MB buffer for high throughput
+                buffer_memory=33554432
             )
             
             interval = 1.0 / events_per_second

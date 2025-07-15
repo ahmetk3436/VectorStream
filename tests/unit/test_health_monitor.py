@@ -137,10 +137,10 @@ class TestHealthMonitor:
         """Test system health check with degraded metrics."""
         self.setUp()
         
-        # Mock degraded system metrics
-        mock_cpu_percent.return_value = 85.0
-        mock_virtual_memory.return_value = Mock(percent=85.0, available=2*1024**3)
-        mock_disk_usage.return_value = Mock(percent=85.0)
+        # Mock degraded system metrics (above 85% but below 95%)
+        mock_cpu_percent.return_value = 90.0
+        mock_virtual_memory.return_value = Mock(percent=90.0, available=2*1024**3)
+        mock_disk_usage.return_value = Mock(percent=90.0)
         
         result = self.run_async_test(self.health_monitor.check_system_health())
         
@@ -155,10 +155,10 @@ class TestHealthMonitor:
         """Test system health check with unhealthy metrics."""
         self.setUp()
         
-        # Mock unhealthy system metrics
-        mock_cpu_percent.return_value = 95.0
-        mock_virtual_memory.return_value = Mock(percent=95.0, available=1*1024**3)
-        mock_disk_usage.return_value = Mock(percent=95.0)
+        # Mock unhealthy system metrics (above 95%)
+        mock_cpu_percent.return_value = 97.0
+        mock_virtual_memory.return_value = Mock(percent=97.0, available=1*1024**3)
+        mock_disk_usage.return_value = Mock(percent=97.0)
         
         result = self.run_async_test(self.health_monitor.check_system_health())
         

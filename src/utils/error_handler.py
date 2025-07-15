@@ -216,7 +216,9 @@ def retry_on_failure(max_attempts: int = 3, base_delay: float = 1.0):
 
 def retry_network_errors(max_attempts: int = 4):
     """Network hatalarında retry decorator"""
-    return retry_with_policy(NETWORK_RETRY_POLICY._replace(max_attempts=max_attempts))
+    from dataclasses import replace
+    policy = replace(NETWORK_RETRY_POLICY, max_attempts=max_attempts)
+    return retry_with_policy(policy)
 
 def retry_with_backoff(strategy: BackoffStrategy = BackoffStrategy.EXPONENTIAL_JITTER, 
                       max_attempts: int = 3, 

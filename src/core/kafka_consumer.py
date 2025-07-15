@@ -162,7 +162,9 @@ class KafkaConsumer:
         for msg in msgs:
             try:
                 # Use orjson for fast JSON parsing - convert to events
-                event = orjson.loads(msg.value())
+                # msg.value can be either bytes (in tests) or callable (in real Kafka)
+                value = msg.value() if callable(msg.value) else msg.value
+                event = orjson.loads(value)
                 events.append(event)
             except orjson.JSONDecodeError as e:
                 logger.error(f"JSON parse hatası: {e}")
@@ -194,7 +196,9 @@ class KafkaConsumer:
         """Tek bir Kafka mesajını işler - legacy single message processing."""
         # JSON parse
         try:
-            data = orjson.loads(msg.value())
+            # msg.value can be either bytes (in tests) or callable (in real Kafka)
+            value = msg.value() if callable(msg.value) else msg.value
+            data = orjson.loads(value)
         except orjson.JSONDecodeError as e:
             logger.error(f"JSON parse hatası: {e}")
             await self._to_dlq(msg, FailureReason.VALIDATION_ERROR, str(e))
@@ -219,12 +223,19 @@ class KafkaConsumer:
         self, msg, reason: FailureReason, err: str  # noqa: ANN001
     ) -> None:
         """Mesajı DLQ kuyruğuna yollar."""
+        # Handle both callable and non-callable msg attributes for test compatibility
+        topic = msg.topic() if callable(msg.topic) else msg.topic
+        partition = msg.partition() if callable(msg.partition) else msg.partition
+        offset = msg.offset() if callable(msg.offset) else msg.offset
+        key = msg.key() if callable(msg.key) else msg.key
+        value = msg.value() if callable(msg.value) else msg.value
+        
         await self.dlq.send_to_dlq(
-            original_topic=msg.topic(),
-            original_partition=msg.partition(),
-            original_offset=msg.offset(),
-            original_key=_safe_decode(msg.key()),
-            original_value=_safe_decode(msg.value()),
+            original_topic=topic,
+            original_partition=partition,
+            original_offset=offset,
+            original_key=_safe_decode(key),
+            original_value=_safe_decode(value),
             failure_reason=reason,
             error_message=err,
             retry_count=0,

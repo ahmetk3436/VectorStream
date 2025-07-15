@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+NewMind AI – Unified API Server
+
+• Health, liveness, readiness ve ayrıntılı sistem bilgisi
+• Prometheus metrics (/metrics) – özel CollectorRegistry desteği
+"""
 
 import asyncio
 import gc
@@ -7,11 +14,12 @@ import psutil
 import threading
 import time
 from typing import Dict, Any, Optional
-from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.responses import Response
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from fastapi.responses import Response
 from loguru import logger
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 import uvicorn
 
 from src.monitoring.prometheus_metrics import PrometheusMetrics
@@ -21,38 +29,44 @@ from src.utils.metrics import SystemMetricsCollector
 
 class UnifiedServer:
     """
-    Tüm servisleri tek FastAPI uygulaması altında toplayan unified server
-    
-    Bu sınıf şunları birleştirir:
-    - Health Check API
-    - Prometheus Metrics API  
-    - System Monitoring
-    - Future: Management API
+    Tüm servisleri tek FastAPI uygulamasında birleştirir:
+
+    • /health (detaylı), /health/simple, /health/live, /health/ready
+    • /metrics  (Prometheus)
+    • /system   (sistem donanım + uptime bilgisi)
+    • /system/gc (manuel garbage-collection tetikleyici)
+    • /debug/config (hızlı debug konfigürasyonu)
     """
-    
+
+    # ------------------------------------------------------------------ #
+    #                             Kurulum                                #
+    # ------------------------------------------------------------------ #
     def __init__(self, metrics: PrometheusMetrics, health_monitor: HealthMonitor):
-        self.app = FastAPI(
-            title="NewMind AI - Unified API Server",
-            description="Health checks, metrics ve management API'lerini birleştiren tek endpoint",
-            version="1.0.0",
-            docs_url="/docs",
-            redoc_url="/redoc"
-        )
-        
         self.metrics = metrics
         self.health_monitor = health_monitor
         self.system_metrics_collector = SystemMetricsCollector(self.metrics)
-        
-        # Background tasks
+
+        self.app = FastAPI(
+            title="NewMind AI – Unified API Server",
+            description=(
+                "Health checks, Prometheus metrics ve yönetim endpoint’lerini birleştirir"
+            ),
+            version="1.0.0",
+            docs_url="/docs",
+            redoc_url="/redoc",
+        )
+
+        # Arka-plan metrik iş parçacığı
         self.stop_metrics_update = threading.Event()
         self.metrics_update_thread: Optional[threading.Thread] = None
-        
+
         self._setup_middleware()
         self._setup_routes()
-        
+
+    # ------------------------------------------------------------------ #
+    #                        Middleware tanımları                         #
+    # ------------------------------------------------------------------ #
     def _setup_middleware(self):
-        """Middleware'leri ayarla"""
-        # CORS middleware
         self.app.add_middleware(
             CORSMiddleware,
             allow_origins=["*"],
@@ -60,104 +74,122 @@ class UnifiedServer:
             allow_methods=["*"],
             allow_headers=["*"],
         )
-        
+
+    # ------------------------------------------------------------------ #
+    #                         Route tanımları                             #
+    # ------------------------------------------------------------------ #
     def _setup_routes(self):
-        """API route'larını ayarla"""
-        
+        """Tüm API rotalarını kaydeder"""
+
+        # ----------------------------- Root ----------------------------- #
         @self.app.get("/")
         async def root():
-            """Ana endpoint - sistem durumu özeti"""
             return {
-                "service": "NewMind AI - Unified Server",
+                "service": "NewMind AI – Unified Server",
                 "version": "1.0.0",
                 "status": "running",
                 "endpoints": {
                     "health": "/health",
-                    "metrics": "/metrics", 
+                    "health_simple": "/health/simple",
+                    "liveness": "/health/live",
+                    "readiness": "/health/ready",
+                    "metrics": "/metrics",
                     "system": "/system",
-                    "docs": "/docs"
-                }
+                    "docs": "/docs",
+                },
             }
-        
+
+        # ----------------------- Detaylı health check ------------------- #
         @self.app.get("/health")
         async def health_check():
-            """Detaylı health check endpoint"""
             try:
                 health_checks = await self.health_monitor.run_all_checks()
                 overall_status = await self.health_monitor.get_overall_status()
-                
-                services = {}
-                
+
+                services: Dict[str, Dict[str, Any]] = {}
                 for check in health_checks:
-                    service_info = {
+                    info: Dict[str, Any] = {
                         "status": check.status.value,
                         "response_time_ms": check.response_time_ms,
-                        "message": check.message
+                        "message": check.message,
                     }
-                    
-                    # Sistem için detay bilgileri ekle
                     if check.service == "system" and check.details:
-                        service_info["details"] = check.details
-                    
-                    services[check.service] = service_info
-                
+                        info["details"] = check.details
+                    services[check.service] = info
+
                 return {
                     "status": overall_status.value,
                     "timestamp": time.time(),
-                    "uptime_seconds": time.time() - getattr(self.metrics, '_start_time', time.time()),
-                    "services": services
+                    "uptime_seconds": time.time() - getattr(
+                        self.metrics, "_start_time", time.time()
+                    ),
+                    "services": services,
                 }
-                
-            except Exception as e:
-                logger.error(f"Health check error: {e}")
-                raise HTTPException(status_code=500, detail=f"Health check failed: {e}")
-        
+            except Exception as exc:
+                logger.error(f"Health check error: {exc}")
+                raise HTTPException(status_code=500, detail=f"Health check failed: {exc}")
+
+        # -------------------- Basit health (/health/simple) ------------- #
         @self.app.get("/health/simple")
         async def simple_health():
-            """Basit health check - sadece OK/FAIL"""
             try:
                 health_checks = await self.health_monitor.run_all_checks()
-                
-                for check in health_checks:
-                    if check.status.value != "healthy":
-                        raise HTTPException(status_code=503, detail="Service unhealthy")
-                
+                if any(ch.status.value != "healthy" for ch in health_checks):
+                    raise HTTPException(status_code=503, detail="Service unhealthy")
                 return {"status": "ok"}
-                
             except HTTPException:
                 raise
-            except Exception as e:
-                logger.error(f"Simple health check error: {e}")
+            except Exception as exc:
+                logger.error(f"Simple health check error: {exc}")
                 raise HTTPException(status_code=500, detail="Health check failed")
-        
+
+        # -------------------------- Liveness probe ---------------------- #
+        @self.app.get("/health/live")
+        async def liveness_probe():
+            return {"status": "alive"}
+
+        # ------------------------- Readiness probe ---------------------- #
+        @self.app.get("/health/ready")
+        async def readiness_probe():
+            try:
+                health_checks = await self.health_monitor.run_all_checks()
+                if any(ch.status.value != "healthy" for ch in health_checks):
+                    raise HTTPException(status_code=503, detail="Service not ready")
+                return {"status": "ready"}
+            except HTTPException:
+                raise
+            except Exception as exc:
+                logger.error(f"Readiness check error: {exc}")
+                raise HTTPException(status_code=500, detail="Readiness check failed")
+
+        # ----------------------- Prometheus metrics --------------------- #
         @self.app.get("/metrics")
         async def prometheus_metrics():
-            """Prometheus metrics endpoint"""
+            """
+            Prometheus metrics endpoint (özel registry ile)
+            """
             try:
-                # Son metrikleri güncelle
+                # Koşu-zamanı metriklerini güncelle
                 self.system_metrics_collector.update_prometheus_metrics()
                 self.metrics.update_uptime()
-                
-                # Prometheus formatında metrics döndür
-                metrics_data = generate_latest()
-                return Response(
-                    content=metrics_data,
-                    media_type=CONTENT_TYPE_LATEST
+
+                # 🔑 Özel CollectorRegistry kullan
+                metrics_data = generate_latest(self.metrics.registry)
+                return Response(content=metrics_data, media_type=CONTENT_TYPE_LATEST)
+            except Exception as exc:
+                logger.error(f"/metrics endpoint error: {exc}")
+                raise HTTPException(
+                    status_code=500, detail=f"Metrics generation failed: {exc}"
                 )
-                
-            except Exception as e:
-                logger.error(f"Metrics endpoint error: {e}")
-                raise HTTPException(status_code=500, detail=f"Metrics generation failed: {e}")
-        
+
+        # ----------------------- Sistem bilgileri ----------------------- #
         @self.app.get("/system")
         async def system_info():
-            """Sistem bilgileri endpoint"""
             try:
-                # Sistem metrikleri
                 cpu_percent = psutil.cpu_percent(interval=1)
                 memory = psutil.virtual_memory()
-                disk = psutil.disk_usage('/')
-                
+                disk = psutil.disk_usage("/")
+
                 return {
                     "system": {
                         "platform": platform.platform(),
@@ -165,131 +197,111 @@ class UnifiedServer:
                         "cpu_cores": psutil.cpu_count(),
                         "cpu_usage_percent": cpu_percent,
                         "memory": {
-                            "total_gb": round(memory.total / (1024**3), 2),
-                            "available_gb": round(memory.available / (1024**3), 2),
-                            "used_percent": memory.percent
+                            "total_gb": round(memory.total / 1024**3, 2),
+                            "available_gb": round(memory.available / 1024**3, 2),
+                            "used_percent": memory.percent,
                         },
                         "disk": {
-                            "total_gb": round(disk.total / (1024**3), 2),
-                            "free_gb": round(disk.free / (1024**3), 2),
-                            "used_percent": round((disk.used / disk.total) * 100, 2)
-                        }
+                            "total_gb": round(disk.total / 1024**3, 2),
+                            "free_gb": round(disk.free / 1024**3, 2),
+                            "used_percent": round((disk.used / disk.total) * 100, 2),
+                        },
                     },
                     "application": {
                         "uptime_seconds": self.metrics.get_uptime(),
                         "metrics_enabled": True,
-                        "health_checks_enabled": True
-                    }
+                        "health_checks_enabled": True,
+                    },
                 }
-                
-            except Exception as e:
-                logger.error(f"System info error: {e}")
-                raise HTTPException(status_code=500, detail=f"System info failed: {e}")
-        
+            except Exception as exc:
+                logger.error(f"System info error: {exc}")
+                raise HTTPException(status_code=500, detail=f"System info failed: {exc}")
+
+        # ---------------------- Manual GC tetikleme --------------------- #
         @self.app.post("/system/gc")
         async def trigger_garbage_collection():
-            """Garbage collection tetikle (debug amaçlı)"""
             try:
                 collected = gc.collect()
                 return {
                     "status": "completed",
                     "objects_collected": collected,
-                    "timestamp": time.time()
+                    "timestamp": time.time(),
                 }
-                
-            except Exception as e:
-                logger.error(f"GC trigger error: {e}")
-                raise HTTPException(status_code=500, detail=f"GC failed: {e}")
-        
+            except Exception as exc:
+                logger.error(f"GC trigger error: {exc}")
+                raise HTTPException(status_code=500, detail=f"GC failed: {exc}")
+
+        # ----------------------- Debug konfig rotası -------------------- #
         @self.app.get("/debug/config")
         async def debug_config():
-            """Debug amaçlı config bilgileri (sensitive bilgiler hariç)"""
             try:
                 return {
                     "metrics_port": 9091,
                     "health_enabled": True,
                     "debug_mode": True,
-                    "timestamp": time.time()
+                    "timestamp": time.time(),
                 }
-                
-            except Exception as e:
-                logger.error(f"Debug config error: {e}")
-                raise HTTPException(status_code=500, detail=f"Debug config failed: {e}")
-    
+            except Exception as exc:
+                logger.error(f"Debug config error: {exc}")
+                raise HTTPException(status_code=500, detail=f"Debug config failed: {exc}")
+
+    # ------------------------------------------------------------------ #
+    #                Background metrics iş parçacığı                     #
+    # ------------------------------------------------------------------ #
     def start_background_metrics_update(self):
-        """Background metrics güncelleme thread'ini başlat"""
+        """5 saniyede bir sistem + health metriklerini yeniler"""
+
         def update_metrics():
             while not self.stop_metrics_update.is_set():
                 try:
-                    # Sistem metriklerini güncelle
                     self.system_metrics_collector.update_prometheus_metrics()
-                    
-                    # Uptime'ı güncelle
                     self.metrics.update_uptime()
-                    
-                    # Health check'leri çalıştır ve metrikleri güncelle
-                    # Background thread'de çalıştığımız için async çağrıyı sync'e çevir
+
+                    # Health-check metrikleri
                     try:
                         loop = asyncio.new_event_loop()
                         asyncio.set_event_loop(loop)
                         loop.run_until_complete(self._update_health_metrics())
-                    except Exception as health_error:
-                        logger.error(f"Health metrics update error: {health_error}")
                     finally:
-                        if 'loop' in locals():
-                            loop.close()
-                    
-                    time.sleep(5)  # Her 5 saniyede bir güncelle
-                    
-                except Exception as e:
-                    logger.error(f"Background metrics update error: {e}")
-                    
+                        loop.close()
+
+                    time.sleep(5)
+                except Exception as exc:
+                    logger.error(f"Background metrics update error: {exc}")
+
         self.metrics_update_thread = threading.Thread(target=update_metrics, daemon=True)
         self.metrics_update_thread.start()
-        logger.info("📊 Background metrics update thread started")
-    
+        logger.info("📊 BG metrics update thread started")
+
     async def _update_health_metrics(self):
-        """Health check metriklerini güncelle"""
         try:
             health_checks = await self.health_monitor.run_all_checks()
-            
             for check in health_checks:
                 self.metrics.record_health_check(
-                    check.service,
-                    check.status.value,
-                    check.response_time_ms / 1000.0
+                    check.service, check.status.value, check.response_time_ms / 1000.0
                 )
-                
-                # Bağlantı durumunu güncelle
                 if check.service == "kafka":
-                    self.metrics.set_kafka_connection_status(check.status.value == "healthy")
+                    self.metrics.set_kafka_connection_status(
+                        check.status.value == "healthy"
+                    )
                 elif check.service == "qdrant":
-                    self.metrics.set_qdrant_connection_status(check.status.value == "healthy")
-                    
-        except Exception as e:
-            logger.error(f"Health metrics update error: {e}")
-    
-    def start_server(self, host: str = "127.0.0.1", port: int = 8080):
-        """FastAPI server'ını başlat"""
-        # Background thread'i başlat
+                    self.metrics.set_qdrant_connection_status(
+                        check.status.value == "healthy"
+                    )
+        except Exception as exc:
+            logger.error(f"Health metrics update error: {exc}")
+
+    # ------------------------------------------------------------------ #
+    #                         Sunucu kontrolü                            #
+    # ------------------------------------------------------------------ #
+    def start_server(self, host: str = "0.0.0.0", port: int = 8080):
         self.start_background_metrics_update()
-        
-        # Server'ı başlat
-        logger.info(f"🚀 Unified server starting on {host}:{port}")
-        uvicorn.run(
-            self.app, 
-            host=host, 
-            port=port,
-            log_level="info",
-            access_log=False  # Çok fazla log olmasın
-        )
-    
+        logger.info(f"🚀 Unified server listening on {host}:{port}")
+        uvicorn.run(self.app, host=host, port=port, log_level="info", access_log=False)
+
     def stop(self):
-        """Server'ı durdur"""
-        logger.info("🛑 Unified server stopping...")
-        
-        # Background thread'i durdur
+        logger.info("🛑 Unified server shutting down…")
         self.stop_metrics_update.set()
         if self.metrics_update_thread and self.metrics_update_thread.is_alive():
             self.metrics_update_thread.join(timeout=5)
-            logger.info("📊 Background metrics thread stopped")
+            logger.info("📊 BG metrics thread stopped")
