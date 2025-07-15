@@ -18,7 +18,6 @@ class KafkaConfig:
     max_poll_records: int = 500
     consumer_timeout_ms: int = 1000
     enable_auto_commit: bool = True
-    # Yeni alanlar - otomatik partition yönetimi
     partitions: int = 16
     replication_factor: int = 1
     auto_create_topic: bool = True
@@ -26,7 +25,6 @@ class KafkaConfig:
     
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]):
-        # Only use parameters that the class accepts
         valid_params = {k: v for k, v in config_dict.items() 
                        if k in cls.__annotations__}
         return cls(**valid_params)
@@ -42,12 +40,10 @@ class KafkaConfig:
                 client_id='vectorstream-admin'
             )
             
-            # Topic'in mevcut olup olmadığını kontrol et
             metadata = admin_client.list_topics()
             topic_exists = self.topic in metadata
             
             if not topic_exists and self.auto_create_topic:
-                # Topic oluştur
                 topic_list = [NewTopic(
                     name=self.topic,
                     num_partitions=self.partitions,
@@ -61,10 +57,8 @@ class KafkaConfig:
                     logger.info(f"ℹ️ Topic '{self.topic}' zaten mevcut")
                     
             elif topic_exists and self.auto_configure_partitions:
-                # Mevcut partition sayısını kontrol et
                 try:
                     topic_metadata = admin_client.describe_topics([self.topic])
-                    # topic_metadata is a dict, get the topic info properly
                     if topic_metadata and self.topic in topic_metadata:
                         topic_info = topic_metadata[self.topic]
                         current_partitions = len(topic_info.partitions) if hasattr(topic_info, 'partitions') else self.partitions
@@ -75,7 +69,6 @@ class KafkaConfig:
                     current_partitions = self.partitions
                 
                 if current_partitions < self.partitions:
-                    # Partition sayısını artır
                     partition_update = {self.topic: NewPartitions(total_count=self.partitions)}
                     
                     try:

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 import sys
 import json
@@ -11,7 +9,6 @@ from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import col, when, lit, current_timestamp, concat, monotonically_increasing_id, length, substring
 from loguru import logger
 
-# Add project root to Python path
 project_root = Path(__file__).parent.parent.parent.absolute()
 sys.path.insert(0, str(project_root))
 
@@ -41,19 +38,16 @@ class SparkBatchProcessor:
         self.qdrant_config = config.get('qdrant', {})
         self.batch_config = config.get('batch', {})
         
-        # Batch ayarları
         self.batch_size = self.batch_config.get('size', 10000)
         self.max_retries = self.batch_config.get('max_retries', 3)
-        self.retry_delay = self.batch_config.get('retry_delay', 60)  # seconds
+        self.retry_delay = self.batch_config.get('retry_delay', 60)
         self.use_optimized = self.batch_config.get('use_optimized', False)
         
-        # Paths
         self.input_path = self.batch_config.get('input_path', '/data/input')
         self.output_path = self.batch_config.get('output_path', '/data/output')
         self.checkpoint_path = self.batch_config.get('checkpoint_path', '/data/checkpoints')
         self.failed_path = self.batch_config.get('failed_path', '/data/failed')
         
-        # Optimized processor kullanılacaksa
         if self.use_optimized:
             batch_config_obj = BatchConfig(
                 min_batch_size=self.batch_size // 2,
@@ -75,14 +69,12 @@ class SparkBatchProcessor:
         else:
             self.optimized_processor = None
         
-        # Embedding job
         self.embedding_job = SparkEmbeddingJob(self.spark_config)
         
-        # Circuit breaker
         self.circuit_breaker_config = CircuitBreakerConfig(
             failure_threshold=3,
-            recovery_timeout=300.0,  # 5 minutes
-            timeout=1800.0  # 30 minutes for large batches
+            recovery_timeout=300.0, 
+            timeout=1800.0 
         )
     
     def initialize(self):
@@ -92,10 +84,8 @@ class SparkBatchProcessor:
         try:
             logger.info("Batch processor başlatılıyor...")
             
-            # Spark session'ını başlat
             self.embedding_job.initialize_spark()
             
-            # Gerekli dizinleri oluştur
             self._create_directories()
             
             logger.info("✅ Batch processor başlatıldı")
@@ -131,14 +121,12 @@ class SparkBatchProcessor:
             Dict[str, Any]: İşleme sonuçları
         """
         try:
-            # Optimized processor kullanılacaksa
             if self.use_optimized and self.optimized_processor:
                 logger.info(f"Optimized processor ile batch dosyaları işleniyor: {file_pattern}")
                 return self.optimized_processor.process_batch_files(file_pattern)
             
             logger.info(f"Batch dosyaları işleniyor: {file_pattern}")
             
-            # Input dosyalarını bul
             input_files = list(Path(self.input_path).glob(file_pattern))
             
             if not input_files:
@@ -160,7 +148,6 @@ class SparkBatchProcessor:
                 'file_results': []
             }
             
-            # Her dosyayı işle
             for file_path in input_files:
                 try:
                     file_result = self._process_single_file(file_path)
@@ -182,7 +169,6 @@ class SparkBatchProcessor:
                         'record_count': 0
                     })
             
-            # Genel durum
             if results['failed_files'] > 0:
                 results['status'] = 'partial_success' if results['processed_files'] > 0 else 'failed'
             
@@ -206,14 +192,12 @@ class SparkBatchProcessor:
         try:
             logger.info(f"Dosya işleniyor: {file_path}")
             
-            # Checkpoint kontrolü
             checkpoint_file = Path(self.checkpoint_path) / f"{file_path.stem}.checkpoint"
             if checkpoint_file.exists():
                 logger.info(f"Dosya zaten işlenmiş (checkpoint mevcut): {file_path}")
                 with open(checkpoint_file, 'r') as f:
                     return json.load(f)
             
-            # Dosyayı oku
             spark = self.embedding_job.spark
             df = spark.read.json(str(file_path))
             
@@ -231,24 +215,18 @@ class SparkBatchProcessor:
             
             start_time = datetime.now()
             
-            # Veri kalitesi kontrolü
             df_validated = self._validate_data(df)
             
-            # Embedding'leri oluştur
             df_processed = self.embedding_job.process_dataframe(df_validated)
             
-            # Çıktı dosya yolu
             output_file = Path(self.output_path) / f"{file_path.stem}_processed.json"
             
-            # Sonuçları kaydet
             df_processed.write.mode("overwrite").json(str(output_file))
             
-            # Qdrant'a yaz
             self.embedding_job.write_to_qdrant(df_processed, self.qdrant_config)
             
             processing_time = (datetime.now() - start_time).total_seconds()
             
-            # Checkpoint oluştur
             result = {
                 'file': str(file_path),
                 'status': 'success',
@@ -261,7 +239,6 @@ class SparkBatchProcessor:
             with open(checkpoint_file, 'w') as f:
                 json.dump(result, f, indent=2)
             
-            # Başarılı dosyayı arşivle
             self._archive_processed_file(file_path)
             
             logger.info(f"✅ Dosya başarıyla işlendi: {file_path} ({processing_time:.2f}s)")
@@ -270,7 +247,6 @@ class SparkBatchProcessor:
         except Exception as e:
             logger.error(f"Dosya işleme hatası {file_path}: {e}")
             
-            # Başarısız dosyayı failed dizinine taşı
             self._move_failed_file(file_path, str(e))
             
             return {
@@ -294,31 +270,26 @@ class SparkBatchProcessor:
         try:
             logger.debug("Veri kalitesi kontrolü yapılıyor...")
             
-            # Gerekli sütunları kontrol et
             required_columns = ['content']
             missing_columns = [col for col in required_columns if col not in df.columns]
             
             if missing_columns:
                 raise ValueError(f"Gerekli sütunlar eksik: {missing_columns}")
             
-            # Boş içerikleri filtrele
             df_clean = df.filter(
                 col('content').isNotNull() & 
                 (col('content') != '') &
                 (col('content') != ' ')
             )
             
-            # ID sütunu yoksa oluştur
             if 'id' not in df.columns:
                 df_clean = df_clean.withColumn('id', 
                     concat(lit('doc_'), monotonically_increasing_id().cast('string'))
                 )
             
-            # Timestamp sütunu yoksa oluştur
             if 'timestamp' not in df.columns:
                 df_clean = df_clean.withColumn('timestamp', current_timestamp())
             
-            # Çok uzun içerikleri kırp (32KB limit)
             max_content_length = 32768
             df_clean = df_clean.withColumn(
                 'content',
@@ -372,7 +343,6 @@ class SparkBatchProcessor:
             failed_path = failed_dir / f"{file_path.stem}_{datetime.now().strftime('%Y%m%d_%H%M%S')}{file_path.suffix}"
             file_path.rename(failed_path)
             
-            # Hata bilgisini kaydet
             error_file = failed_path.with_suffix('.error')
             with open(error_file, 'w') as f:
                 json.dump({
@@ -396,12 +366,10 @@ class SparkBatchProcessor:
         try:
             logger.info("Zamanlanmış batch işleme başlatılıyor...")
             
-            # Optimized processor kullanılacaksa
             if self.use_optimized and self.optimized_processor:
                 logger.info("Optimized processor ile zamanlanmış batch işleme")
                 return self.optimized_processor.process_scheduled_batches()
             
-            # Farklı dosya türlerini işle
             file_patterns = [
                 "*.json",
                 "*.jsonl",
@@ -426,7 +394,6 @@ class SparkBatchProcessor:
                 all_results['total_records'] += pattern_result['total_records']
                 all_results['total_failed_files'] += pattern_result['failed_files']
             
-            # Genel durum
             if all_results['total_failed_files'] > 0:
                 all_results['status'] = 'partial_success' if all_results['total_processed_files'] > 0 else 'failed'
             else:
@@ -451,7 +418,6 @@ class SparkBatchProcessor:
             
             cutoff_date = datetime.now() - timedelta(days=days)
             
-            # Temizlenecek dizinler
             cleanup_dirs = [
                 Path(self.checkpoint_path),
                 Path(self.input_path) / 'processed',
@@ -486,7 +452,6 @@ class SparkBatchProcessor:
             Dict[str, Any]: İstatistikler
         """
         try:
-            # Optimized processor kullanılacaksa
             if self.use_optimized and self.optimized_processor:
                 logger.debug("Optimized processor'dan performance raporu alınıyor")
                 return self.optimized_processor.get_performance_report()
@@ -498,16 +463,13 @@ class SparkBatchProcessor:
                 'checkpoints': 0
             }
             
-            # Processed files
             processed_dir = Path(self.input_path) / 'processed'
             if processed_dir.exists():
                 stats['processed_files'] = len(list(processed_dir.glob('*')))
             
-            # Failed files
             if Path(self.failed_path).exists():
                 stats['failed_files'] = len(list(Path(self.failed_path).glob('*.json')))
             
-            # Checkpoints
             if Path(self.checkpoint_path).exists():
                 stats['checkpoints'] = len(list(Path(self.checkpoint_path).glob('*.checkpoint')))
             
@@ -524,12 +486,10 @@ class SparkBatchProcessor:
         try:
             logger.info("Batch processor durduruluyor...")
             
-            # Optimized processor kullanılacaksa
             if self.use_optimized and self.optimized_processor:
                 logger.info("Optimized processor durduruluyor...")
                 self.optimized_processor.stop()
             
-            # Embedding job'ı durdur
             if self.embedding_job:
                 self.embedding_job.stop()
             

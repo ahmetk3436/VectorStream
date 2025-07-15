@@ -20,28 +20,14 @@ from src.config.app_config import load_config
 from src.exceptions.embedding_exceptions import EmbeddingProcessingError
 
 class SparkCLI:
-    """
-    Spark işlemleri için komut satırı arayüzü
-    
-    Bu sınıf Spark job'larını komut satırından yönetmeyi sağlar.
-    """
     
     def __init__(self):
-        """
-        CLI'yi başlat
-        """
         self.config = None
         self.embedding_job = None
         self.batch_processor = None
         self.kafka_connector = None
     
     def load_configuration(self, config_path: Optional[str] = None):
-        """
-        Konfigürasyonu yükle
-        
-        Args:
-            config_path: Konfigürasyon dosya yolu
-        """
         try:
             if config_path:
                 with open(config_path, 'r') as f:
@@ -59,14 +45,6 @@ class SparkCLI:
                      input_path: str, 
                      output_path: str,
                      config_path: Optional[str] = None):
-        """
-        Batch job'ını çalıştır
-        
-        Args:
-            input_path: Girdi dosya yolu
-            output_path: Çıktı dosya yolu
-            config_path: Konfigürasyon dosya yolu
-        """
         try:
             logger.info(f"Batch job başlatılıyor: {input_path} -> {output_path}")
             
@@ -97,15 +75,6 @@ class SparkCLI:
                            file_pattern: str = "*.json",
                            cleanup_days: int = 7,
                            use_optimized: bool = False):
-        """
-        Batch processor'ı çalıştır
-        
-        Args:
-            config_path: Konfigürasyon dosya yolu
-            file_pattern: İşlenecek dosya pattern'i
-            cleanup_days: Temizlenecek eski dosyaların gün sayısı
-            use_optimized: Optimize edilmiş batch processor kullan
-        """
         try:
             processor_type = "Optimized" if use_optimized else "Standard"
             logger.info(f"{processor_type} batch processor başlatılıyor: {file_pattern}")
@@ -146,13 +115,6 @@ class SparkCLI:
     def run_streaming(self, 
                      config_path: Optional[str] = None,
                      duration: Optional[int] = None):
-        """
-        Streaming pipeline'ını çalıştır
-        
-        Args:
-            config_path: Konfigürasyon dosya yolu
-            duration: Çalışma süresi (saniye, None = süresiz)
-        """
         try:
             logger.info("Streaming pipeline başlatılıyor...")
             
@@ -191,12 +153,6 @@ class SparkCLI:
                 self.kafka_connector.stop()
     
     def show_streaming_status(self, config_path: Optional[str] = None):
-        """
-        Streaming durumunu göster
-        
-        Args:
-            config_path: Konfigürasyon dosya yolu
-        """
         try:
             logger.info("Streaming durumu kontrol ediliyor...")
             
@@ -223,13 +179,6 @@ class SparkCLI:
     def test_embedding(self, 
                       text: str,
                       config_path: Optional[str] = None):
-        """
-        Embedding oluşturmayı test et
-        
-        Args:
-            text: Test metni
-            config_path: Konfigürasyon dosya yolu
-        """
         try:
             logger.info(f"Embedding test ediliyor: '{text[:50]}...'")
             
@@ -267,13 +216,6 @@ class SparkCLI:
     def create_sample_data(self, 
                           output_path: str,
                           count: int = 100):
-        """
-        Örnek test verisi oluştur
-        
-        Args:
-            output_path: Çıktı dosya yolu
-            count: Oluşturulacak kayıt sayısı
-        """
         try:
             logger.info(f"Örnek veri oluşturuluyor: {count} kayıt -> {output_path}")
             
@@ -323,9 +265,6 @@ class SparkCLI:
             raise
 
 def main():
-    """
-    Ana CLI fonksiyonu
-    """
     parser = argparse.ArgumentParser(
         description="NewMind AI Spark İşlemleri CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,

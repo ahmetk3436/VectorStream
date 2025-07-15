@@ -7,12 +7,6 @@ scrape_configs:
     static_configs:
       - targets: ['prometheus:9090']
 
-  - job_name: 'kafka'
-    static_configs:
-      - targets: ['kafka:9092']
-    metrics_path: '/metrics'
-    scrape_interval: 30s
-
   - job_name: 'qdrant'
     static_configs:
       - targets: ['qdrant:6333']
@@ -31,6 +25,6 @@ scrape_configs:
 
   - job_name: 'vectorstream'
     static_configs:
-      - targets: ['host.docker.internal:8080']
+      - targets: ['app:8080']
     metrics_path: '/metrics'
     scrape_interval: 15s

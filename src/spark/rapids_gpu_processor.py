@@ -44,45 +44,33 @@ except ImportError:
     logger.warning("⚠️ SentenceTransformers not available")
 
 class RAPIDSGPUProcessor:
-    """
-    RAPIDS GPU-accelerated embedding processor
-    
-    Bu sınıf RAPIDS cuDF ve cuML kullanarak GPU-accelerated embedding işleme sağlar.
-    GPU mevcut değilse otomatik olarak CPU'ya fallback yapar.
-    """
     
     def __init__(self, config: Dict[str, Any]):
-        """
-        RAPIDS GPU processor'ı başlat
-        
-        Args:
-            config: Sistem konfigürasyonu
-        """
         self.config = config
         self.gpu_config = config.get('gpu', {})
         self.embedding_config = config.get('embedding', {})
         
-        # GPU availability check
+
         self.gpu_enabled = self._check_gpu_availability()
         
-        # Model configuration
+
         self.model_name = self.embedding_config.get('model', 'all-MiniLM-L6-v2')
         self.vector_size = self.embedding_config.get('vector_size', 384)
         self.batch_size = self.embedding_config.get('batch_size', 1000)
         
-        # Performance settings
+
         self.use_tfidf_fallback = self.gpu_config.get('use_tfidf_fallback', True)
         self.max_features = self.gpu_config.get('max_features', 10000)
         self.svd_components = self.gpu_config.get('svd_components', 384)
         
-        # Circuit breaker
+
         self.circuit_breaker_config = CircuitBreakerConfig(
             failure_threshold=3,
             recovery_timeout=30.0,
             timeout=120.0
         )
         
-        # Initialize models
+
         self._sentence_model = None
         self._tfidf_model = None
         self._svd_model = None
@@ -90,21 +78,15 @@ class RAPIDSGPUProcessor:
         logger.info(f"RAPIDS GPU Processor initialized - GPU: {self.gpu_enabled}")
     
     def _check_gpu_availability(self) -> bool:
-        """
-        GPU kullanılabilirliğini kontrol et
-        
-        Returns:
-            bool: GPU kullanılabilir mi
-        """
         if not RAPIDS_AVAILABLE:
             return False
         
         try:
-            # GPU memory check
+
             mempool = cp.get_default_memory_pool()
             total_bytes = mempool.total_bytes()
             
-            # Check if we have at least 1GB GPU memory
+
             min_memory_gb = self.gpu_config.get('min_memory_gb', 1.0)
             if total_bytes < min_memory_gb * 1024**3:
                 logger.warning(f"Insufficient GPU memory: {total_bytes / 1024**3:.2f}GB < {min_memory_gb}GB")
@@ -118,9 +100,6 @@ class RAPIDSGPUProcessor:
             return False
     
     def _get_sentence_model(self):
-        """
-        Sentence transformer model'i lazy loading ile yükle
-        """
         if self._sentence_model is None:
             if not SENTENCE_TRANSFORMERS_AVAILABLE:
                 raise EmbeddingProcessingError("SentenceTransformers not available")
@@ -145,11 +124,11 @@ class RAPIDSGPUProcessor:
                 logger.warning("GPU not available, falling back to CPU")
                 return self._process_embeddings_cpu(texts)
             
-            # Convert to cuDF DataFrame for GPU processing
+
             import cudf
             df = cudf.DataFrame({'text': texts})
             
-            # Process embeddings using SentenceTransformer on GPU
+
             embeddings = self._get_sentence_model().encode(
                 texts,
                 device='cuda' if self.gpu_enabled else 'cpu',
@@ -157,7 +136,7 @@ class RAPIDSGPUProcessor:
                 show_progress_bar=False
             )
             
-            # Use RAPIDS cuML for additional GPU acceleration if available
+
             if self.gpu_config.get('use_cuml_acceleration', False):
                 embeddings = self._apply_cuml_acceleration(embeddings)
             
@@ -206,7 +185,7 @@ class RAPIDSGPUProcessor:
             # Apply normalization using cuML
             normalized_embeddings = cu_normalize(gpu_embeddings, norm='l2')
             
-            # Convert back to numpy
+
             return cp.asnumpy(normalized_embeddings)
             
         except Exception as e:
@@ -223,7 +202,7 @@ class RAPIDSGPUProcessor:
         
         info = {'gpu_available': self.gpu_enabled}
         
-        # System memory
+
         sys_mem = psutil.virtual_memory()
         info['system_memory'] = {
             'total_gb': sys_mem.total / 1024**3,
@@ -232,7 +211,7 @@ class RAPIDSGPUProcessor:
             'percent_used': sys_mem.percent
         }
         
-        # GPU memory
+
         if self.gpu_enabled and RAPIDS_AVAILABLE:
             try:
                 mempool = cp.get_default_memory_pool()
@@ -250,12 +229,6 @@ class RAPIDSGPUProcessor:
         
         return info
     def _get_tfidf_model(self, fit_data: Optional[List[str]] = None):
-        """
-        TF-IDF model'i lazy loading ile yükle
-        
-        Args:
-            fit_data: Model'i fit etmek için kullanılacak veri
-        """
         if self._tfidf_model is None:
             if self.gpu_enabled and RAPIDS_AVAILABLE:
                 logger.info("Initializing cuML TF-IDF vectorizer")
@@ -275,11 +248,11 @@ class RAPIDSGPUProcessor:
                     ngram_range=(1, 2)
                 )
             
-            # Fit model if data provided
+
             if fit_data:
                 logger.info(f"Fitting TF-IDF model with {len(fit_data)} samples")
                 if self.gpu_enabled:
-                    # Convert to cuDF Series
+    
                     cudf_series = cudf.Series(fit_data)
                     self._tfidf_model.fit(cudf_series)
                 else:
@@ -288,9 +261,6 @@ class RAPIDSGPUProcessor:
         return self._tfidf_model
     
     def _get_svd_model(self):
-        """
-        SVD model'i lazy loading ile yükle
-        """
         if self._svd_model is None:
             if self.gpu_enabled:
                 logger.info(f"Initializing cuML TruncatedSVD with {self.svd_components} components")
@@ -304,29 +274,20 @@ class RAPIDSGPUProcessor:
     
     @circuit_breaker("rapids_gpu_embedding")
     def create_embeddings_gpu(self, texts: List[str]) -> np.ndarray:
-        """
-        GPU kullanarak embedding'ler oluştur
-        
-        Args:
-            texts: İşlenecek metinler
-            
-        Returns:
-            np.ndarray: Embedding'ler
-        """
         if not self.gpu_enabled:
             raise EmbeddingProcessingError("GPU not available for embedding creation")
         
         try:
             start_time = time.time()
             
-            # Boş metinleri filtrele
+
             valid_texts = [text.strip() if text else "" for text in texts]
             
             if self.use_tfidf_fallback:
-                # TF-IDF + SVD approach for GPU
+
                 embeddings = self._create_tfidf_embeddings_gpu(valid_texts)
             else:
-                # SentenceTransformer approach (CPU fallback)
+
                 embeddings = self._create_sentence_embeddings(valid_texts)
             
             processing_time = time.time() - start_time
@@ -339,37 +300,28 @@ class RAPIDSGPUProcessor:
             raise EmbeddingProcessingError(f"GPU embedding failed: {e}")
     
     def _create_tfidf_embeddings_gpu(self, texts: List[str]) -> np.ndarray:
-        """
-        TF-IDF + SVD kullanarak GPU'da embedding oluştur
-        
-        Args:
-            texts: İşlenecek metinler
-            
-        Returns:
-            np.ndarray: Embedding'ler
-        """
         try:
-            # Convert to cuDF Series
+
             cudf_texts = cudf.Series(texts)
             
-            # Get or fit TF-IDF model
+
             tfidf_model = self._get_tfidf_model(texts)
             
-            # Transform texts to TF-IDF vectors
+
             logger.info("Creating TF-IDF vectors on GPU")
             tfidf_matrix = tfidf_model.transform(cudf_texts)
             
-            # Apply SVD for dimensionality reduction
+
             svd_model = self._get_svd_model()
             
             logger.info("Applying SVD dimensionality reduction on GPU")
             if not hasattr(svd_model, 'components_'):
-                # Fit SVD if not already fitted
+
                 embeddings = svd_model.fit_transform(tfidf_matrix)
             else:
                 embeddings = svd_model.transform(tfidf_matrix)
             
-            # Normalize embeddings
+
             embeddings = cu_normalize(embeddings, norm='l2')
             
             # Convert back to numpy
@@ -380,19 +332,10 @@ class RAPIDSGPUProcessor:
             
         except Exception as e:
             logger.error(f"TF-IDF GPU embedding creation failed: {e}")
-            # Fallback to CPU
+
             return self._create_tfidf_embeddings_cpu(texts)
     
     def _create_tfidf_embeddings_cpu(self, texts: List[str]) -> np.ndarray:
-        """
-        TF-IDF + SVD kullanarak CPU'da embedding oluştur (fallback)
-        
-        Args:
-            texts: İşlenecek metinler
-            
-        Returns:
-            np.ndarray: Embedding'ler
-        """
         try:
             from sklearn.feature_extraction.text import TfidfVectorizer
             from sklearn.decomposition import TruncatedSVD
@@ -400,7 +343,7 @@ class RAPIDSGPUProcessor:
             
             logger.info("Creating TF-IDF embeddings on CPU (fallback)")
             
-            # TF-IDF vectorization
+
             tfidf = TfidfVectorizer(
                 max_features=self.max_features,
                 stop_words='english',
@@ -410,11 +353,11 @@ class RAPIDSGPUProcessor:
             
             tfidf_matrix = tfidf.fit_transform(texts)
             
-            # SVD dimensionality reduction
+
             svd = TruncatedSVD(n_components=self.svd_components)
             embeddings = svd.fit_transform(tfidf_matrix)
             
-            # Normalize
+
             embeddings = normalize(embeddings, norm='l2')
             
             return embeddings
@@ -429,15 +372,6 @@ class RAPIDSGPUProcessor:
             raise EmbeddingProcessingError(f"CPU TF-IDF embedding failed: {e}")
     
     def _create_sentence_embeddings(self, texts: List[str]) -> np.ndarray:
-        """
-        SentenceTransformer kullanarak embedding oluştur
-        
-        Args:
-            texts: İşlenecek metinler
-            
-        Returns:
-            np.ndarray: Embedding'ler
-        """
         try:
             model = self._get_sentence_model()
             
@@ -460,12 +394,12 @@ class RAPIDSGPUProcessor:
         """
         logger.info("Cleaning up RAPIDS GPU Processor resources")
         
-        # Clear models
+
         self._sentence_model = None
         self._tfidf_model = None
         self._svd_model = None
         
-        # Free GPU memory
+
         if self.gpu_enabled and RAPIDS_AVAILABLE:
             try:
                 mempool = cp.get_default_memory_pool()
@@ -474,29 +408,20 @@ class RAPIDSGPUProcessor:
             except Exception as e:
                 logger.warning(f"Could not free GPU memory: {e}")
         
-        # Disable GPU to prevent further use
+
         self.gpu_enabled = False
     
     @circuit_breaker("rapids_embedding_fallback")
     def create_embeddings_with_fallback(self, texts: List[str]) -> np.ndarray:
-        """
-        GPU ile embedding oluştur, başarısız olursa CPU'ya fallback yap
-        
-        Args:
-            texts: İşlenecek metinler
-            
-        Returns:
-            np.ndarray: Embedding'ler
-        """
         try:
             if self.gpu_enabled:
                 try:
                     return self.create_embeddings_gpu(texts)
                 except Exception as e:
                     logger.warning(f"GPU embedding failed, falling back to CPU: {e}")
-                    self.gpu_enabled = False  # Disable GPU for subsequent calls
+                    self.gpu_enabled = False
             
-            # CPU fallback
+
             logger.info("Using CPU for embedding creation")
             if self.use_tfidf_fallback:
                 return self._create_tfidf_embeddings_cpu(texts)
@@ -508,16 +433,6 @@ class RAPIDSGPUProcessor:
             raise EmbeddingProcessingError(f"Embedding creation failed: {e}")
     
     def benchmark_performance(self, test_texts: List[str], iterations: int = 3) -> Dict[str, Any]:
-        """
-        GPU vs CPU performance benchmark
-        
-        Args:
-            test_texts: Test metinleri
-            iterations: Benchmark iterasyon sayısı
-            
-        Returns:
-            Dict[str, Any]: Benchmark sonuçları
-        """
         results = {
             'gpu_available': self.gpu_enabled,
             'test_size': len(test_texts),
@@ -531,7 +446,7 @@ class RAPIDSGPUProcessor:
         
         logger.info(f"Starting performance benchmark with {len(test_texts)} texts")
         
-        # GPU benchmark
+
         if self.gpu_enabled:
             for i in range(iterations):
                 start_time = time.time()
@@ -546,9 +461,9 @@ class RAPIDSGPUProcessor:
             if results['gpu_times']:
                 results['gpu_avg'] = sum(results['gpu_times']) / len(results['gpu_times'])
         
-        # CPU benchmark
+
         original_gpu_enabled = self.gpu_enabled
-        self.gpu_enabled = False  # Force CPU
+        self.gpu_enabled = False
         
         for i in range(iterations):
             start_time = time.time()
@@ -563,12 +478,12 @@ class RAPIDSGPUProcessor:
             except Exception as e:
                 logger.error(f"CPU benchmark iteration {i+1} failed: {e}")
         
-        self.gpu_enabled = original_gpu_enabled  # Restore original setting
+        self.gpu_enabled = original_gpu_enabled
         
         if results['cpu_times']:
             results['cpu_avg'] = sum(results['cpu_times']) / len(results['cpu_times'])
         
-        # Calculate speedup
+
         if results['gpu_avg'] > 0 and results['cpu_avg'] > 0:
             results['speedup'] = results['cpu_avg'] / results['gpu_avg']
         
@@ -577,19 +492,13 @@ class RAPIDSGPUProcessor:
         return results
     
     def get_memory_usage(self) -> Dict[str, Any]:
-        """
-        GPU ve sistem memory kullanımını al
-        
-        Returns:
-            Dict[str, Any]: Memory kullanım bilgileri
-        """
         memory_info = {
             'gpu_available': self.gpu_enabled,
             'gpu_memory': {},
             'system_memory': {}
         }
         
-        # GPU memory
+
         if self.gpu_enabled and RAPIDS_AVAILABLE:
             try:
                 mempool = cp.get_default_memory_pool()
@@ -610,7 +519,7 @@ class RAPIDSGPUProcessor:
             except Exception as e:
                 logger.error(f"GPU memory info failed: {e}")
         
-        # System memory
+
         try:
             import psutil
             mem = psutil.virtual_memory()

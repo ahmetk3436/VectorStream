@@ -1,16 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-VectorStream: Kafka-Spark Connector for E-Commerce Behavior Analysis Pipeline
-Task Requirements
-─────────────────
-• Apache Spark Structured Streaming (mandatory)
-• Batch interval: 10 seconds
-• Kafka event consumption
-• Nested product structure support
-• Embedding processing with Sentence Transformers
-• Qdrant vector database integration
-"""
 
 from __future__ import annotations
 
@@ -50,23 +38,10 @@ from src.spark.embedding_job import SparkEmbeddingJob
 from src.spark.distributed_embedding_processor import execute_distributed_processing
 from src.utils.circuit_breaker import circuit_breaker, CircuitBreakerConfig
 
-# -----------------------------------------------------------------------------
-# Kafka-Spark Connector
-# -----------------------------------------------------------------------------
-class KafkaSparkConnector:
-    """
-    Kafka-Spark Connector for VectorStream Pipeline
-    Implements:
-      • Apache Spark Structured Streaming for real-time processing
-      • 10 s batch intervals
-      • Kafka event consumption
-      • Nested product structure handling
-      • Embedding generation and Qdrant storage
-    """
 
-    # -------------------------------------------------------------------------
-    # Initialization
-    # -------------------------------------------------------------------------
+class KafkaSparkConnector:
+
+
     def __init__(
         self,
         config: Dict[str, Any],
@@ -80,25 +55,25 @@ class KafkaSparkConnector:
         self.qdrant_config = config.get("qdrant", {})
         self.streaming_config = config.get("streaming", {})
         
-        # Performans modu seçimi
+
         self.use_distributed_processing = config.get("performance", {}).get("use_distributed_processing", True)
 
         self.metrics = metrics
         self.embedding_processor = embedding_processor
         self.qdrant_writer = qdrant_writer
 
-        # Spark-related
+
         self.spark: Optional[SparkSession] = None
         self.active_queries: Dict[str, StreamingQuery] = {}
 
-        # Batch / streaming options
+
         self.batch_interval = self.streaming_config.get("batch_duration", "10 seconds")
         self.checkpoint_location = self.streaming_config.get(
             "checkpoint_location", "/tmp/spark-checkpoints"
         )
         self.watermark_delay = self.streaming_config.get("watermark_delay", "1 minute")
 
-        # Kafka options
+
         self.bootstrap_servers = self.kafka_config.get(
             "bootstrap_servers", "localhost:9092"
         )
@@ -110,11 +85,11 @@ class KafkaSparkConnector:
             "group_id", "spark_embedding_processor"
         )
 
-        # Helpers that will be lazily initialised
+
         self.embedding_model = None
         self.qdrant_client = None
 
-        # Circuit breaker
+
         self.circuit_breaker_config = CircuitBreakerConfig(
             failure_threshold=5, recovery_timeout=120.0, timeout=600.0
         )
@@ -124,7 +99,7 @@ class KafkaSparkConnector:
         logger.info(f"   ✅ Batch interval: {self.batch_interval}")
         logger.info(f"   ✅ Kafka topic: {self.input_topic}")
 
-        # Separate Spark job helper
+
         self.embedding_job = SparkEmbeddingJob(self.spark_config)
 
     # -------------------------------------------------------------------------

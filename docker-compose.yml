@@ -1,9 +1,10 @@
 services:
   kafka:
-    image: apache/kafka-native:3.8.0         
+    image: apache/kafka-native:3.8.0
     container_name: kafka
     ports:
-      - "${KAFKA_PORT:-9092}:9092"      
+      - "${KAFKA_PORT:-9092}:9092"
+      - "9094:9094"
     volumes:
       - kafka-data:/var/lib/kafka/data
     environment:
@@ -11,16 +12,23 @@ services:
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9091"
-      KAFKA_LISTENERS: >-
+      KAFKA_LISTENERS: >
         CONTROLLER://0.0.0.0:9091,HOST://0.0.0.0:9092,DOCKER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: >-
+      KAFKA_ADVERTISED_LISTENERS: >
         HOST://localhost:9092,DOCKER://kafka:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,HOST:PLAINTEXT,DOCKER:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_REPLICATION_FACTOR:-1}
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':>/dev/tcp/localhost/9092'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
-    env_file:
-      - .env
+    networks: 
+      - newmind
+    env_file: [.env]
 
   kafka-ui:
     image: ghcr.io/kafbat/kafka-ui:main
@@ -32,10 +40,19 @@ services:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9093
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL",
+            "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
-    env_file:
-      - .env
+    networks: 
+      - newmind    
+    env_file: [.env]
 
   qdrant:
     image: qdrant/qdrant:latest
@@ -46,62 +63,97 @@ services:
     volumes:
       - qdrant_storage:/qdrant/storage
     environment:
-      - QDRANT__SERVICE__HTTP_PORT=${QDRANT_PORT:-6333}
-      - QDRANT__SERVICE__GRPC_PORT=6334
+      QDRANT__SERVICE__HTTP_PORT: ${QDRANT_PORT:-6333}
+      QDRANT__SERVICE__GRPC_PORT: 6334
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':>/dev/tcp/localhost/6333'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     restart: unless-stopped
-    networks:
+    networks: 
       - newmind
-    env_file:
-      - .env
-    
+    env_file: [.env]
+
   spark-master:
-    image: apache/spark:latest         
+    image: apache/spark:latest
     container_name: spark-master
     hostname: spark-master
-    command: ["/opt/spark/bin/spark-class",
-              "org.apache.spark.deploy.master.Master",
-              "--host", "spark-master",
-              "--port", "${SPARK_MASTER_PORT:-7077}"]
+    command:
+      ["/opt/spark/bin/spark-class","org.apache.spark.deploy.master.Master",
+       "--host","spark-master","--port","${SPARK_MASTER_PORT:-7077}"]
     volumes:
       - spark-events:/opt/spark/spark-events
+      - ./config/spark:/opt/spark/conf
       - ./src:/opt/spark/src
     ports:
-      - "${SPARK_MASTER_PORT:-7077}:7077"     
+      - "${SPARK_MASTER_PORT:-7077}:7077"
       - "${SPARK_MASTER_UI_PORT:-8080}:8080"
-    env_file:
-      - .env 
+    healthcheck:
+      test: ["CMD-SHELL","curl -fs http://localhost:8080 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks: 
+      - newmind
+    env_file: [.env]
 
   spark-worker-1:
     image: apache/spark:latest
     container_name: spark-worker-1
     hostname: spark-worker-1
-    depends_on: [spark-master]
-    command: ["/opt/spark/bin/spark-class",
-              "org.apache.spark.deploy.worker.Worker",
-              "spark://spark-master:${SPARK_MASTER_PORT:-7077}"]
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    command:
+      ["/opt/spark/bin/spark-class","org.apache.spark.deploy.worker.Worker",
+       "spark://spark-master:${SPARK_MASTER_PORT:-7077}"]
     volumes:
       - ./src:/opt/spark/src
       - spark-events:/opt/spark/spark-events
+      - ./config/spark:/opt/spark/conf
     ports:
       - "${SPARK_WORKER_UI_PORT:-8081}:8081"
-    env_file:
-      - .env  
+    healthcheck:
+      test: ["CMD-SHELL","curl -fs http://localhost:8081 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks: 
+      - newmind
+    env_file: [.env]
 
   spark-history:
     image: apache/spark:latest
     container_name: spark-history
     hostname: spark-history
-    depends_on: [spark-master]
-    command: ["/opt/spark/bin/spark-class",
-              "org.apache.spark.deploy.history.HistoryServer"]
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    command:
+      ["/opt/spark/bin/spark-class","org.apache.spark.deploy.history.HistoryServer"]
     volumes:
       - spark-events:/opt/spark/spark-events
     ports:
       - "${SPARK_HISTORY_PORT:-18080}:18080"
-    networks:
+    healthcheck:
+      test: ["CMD-SHELL",
+            "wget --no-verbose http://localhost:18080/api/v1/applications || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+    restart: unless-stopped
+    environment:
+      - SPARK_HISTORY_OPTS=-Dspark.history.fs.logDirectory=/opt/spark/spark-events
+    networks: 
       - newmind
-    env_file:
-      - .env
+    env_file: [.env]
 
   prometheus:
     image: prom/prometheus:latest
@@ -115,13 +167,17 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
       - '--web.enable-lifecycle'
-    networks:
+    healthcheck:
+      test: ["CMD-SHELL",
+            "wget -qO- http://localhost:9090/-/healthy > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks: 
       - newmind
-    env_file:
-      - .env
+    env_file: [.env]
 
   grafana:
     image: grafana/grafana:latest
@@ -130,18 +186,24 @@ services:
     ports:
       - "${GRAFANA_PORT:-3000}:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin123}
-      - GF_USERS_ALLOW_SIGN_UP=false
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin123}
+      GF_USERS_ALLOW_SIGN_UP: "false"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
-    networks:
-      - newmind
+    healthcheck:
+      test: ["CMD-SHELL","curl -fs http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
-      - prometheus
-    env_file:
-      - .env
+      prometheus:
+        condition: service_healthy
+    networks: 
+      - newmind
+    env_file: [.env]
 
   node-exporter:
     image: prom/node-exporter:latest
@@ -157,11 +219,11 @@ services:
       - '--path.procfs=/host/proc'
       - '--path.rootfs=/rootfs'
       - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^\/(sys|proc|dev|host|etc)($$|/)'
-    networks:
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--web.disable-exporter-metrics'
+    networks: 
       - newmind
-    env_file:
-      - .env
+    env_file: [.env]
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
@@ -176,12 +238,45 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
     privileged: true
-    devices:
-      - /dev/kmsg
-    networks:
+    devices: [/dev/kmsg]
+    healthcheck:
+      test: ["CMD-SHELL",
+            "wget --no-verbose --tries=1 --spider http://localhost:8080/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks: 
       - newmind
-    env_file:
-      - .env
+    env_file: [.env]
+
+  app:
+    build: .
+    container_name: vectorstream-app
+    depends_on:
+      kafka: {condition: service_healthy}
+      qdrant: {condition: service_healthy}
+      spark-master: {condition: service_healthy}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./logs:/app/logs
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9093
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+    healthcheck:
+      test: ["CMD-SHELL","curl -fs http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    networks: 
+      - newmind
+    restart: unless-stopped
+    env_file: [.env]
 
 networks:
   newmind:

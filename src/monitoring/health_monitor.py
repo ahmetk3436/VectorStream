@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import asyncio
 import time
 from typing import Dict, Any, Optional
@@ -33,7 +31,7 @@ class HealthMonitor:
         self.qdrant_config = qdrant_config
         self.health_checks = {}
         self.last_check_time = 0
-        self.check_interval = 30  # 30 saniye
+        self.check_interval = 30 
         
     async def check_kafka_health(self) -> HealthCheck:
         """Kafka sağlık kontrolü"""
@@ -46,7 +44,6 @@ class HealthMonitor:
             if not self.kafka_config:
                 raise Exception("Kafka config not provided")
             
-            # Kafka bağlantısını test et
             if isinstance(self.kafka_config, dict):
                 bootstrap_servers = self.kafka_config.get('bootstrap_servers', 'localhost:9092')
             else:
@@ -58,7 +55,6 @@ class HealthMonitor:
                 api_version=(0, 10, 1)
             )
             
-            # Test connection by checking if we can access partitions for a topic
             try:
                 # This will establish connection to the Kafka cluster
                 partitions = consumer.partitions_for_topic('test-topic')
@@ -72,7 +68,6 @@ class HealthMonitor:
             
             response_time = (time.time() - start_time) * 1000
             
-            # Kafka config handling
             if isinstance(self.kafka_config, dict):
                 bootstrap_servers = self.kafka_config.get('bootstrap_servers', 'localhost:9092')
             else:
@@ -111,11 +106,9 @@ class HealthMonitor:
             if not self.qdrant_config:
                 raise Exception("Qdrant config not provided")
             
-            # Qdrant config handling - use gRPC port for high-performance
             host = self.qdrant_config.get('host') if isinstance(self.qdrant_config, dict) else getattr(self.qdrant_config, 'host', 'localhost')
-            port = self.qdrant_config.get('port') if isinstance(self.qdrant_config, dict) else getattr(self.qdrant_config, 'port', 6334)  # gRPC port
+            port = self.qdrant_config.get('port') if isinstance(self.qdrant_config, dict) else getattr(self.qdrant_config, 'port', 6334)
             
-            # Qdrant bağlantısını test et (gRPC)
             client = QdrantClient(
                 host=host,
                 port=port,
@@ -124,7 +117,6 @@ class HealthMonitor:
                 timeout=5
             )
             
-            # Koleksiyonları listele
             collections = client.get_collections()
             
             response_time = (time.time() - start_time) * 1000
@@ -158,22 +150,18 @@ class HealthMonitor:
         try:
             import psutil
             
-            # CPU ve memory kullanımını al
             cpu_percent = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
             disk = psutil.disk_usage('/')
             
             response_time = (time.time() - start_time) * 1000
             
-            # Eşik değerleri kontrol et (daha gerçekçi değerler)
             status = HealthStatus.HEALTHY
             messages = []
             
-            # Unhealthy: Kritik seviye (sistem kullanılamaz)
             if cpu_percent > 95 or memory.percent > 95 or disk.percent > 95:
                 status = HealthStatus.UNHEALTHY
                 messages.append("System is unhealthy")
-            # Degraded: Yüksek kullanım (dikkat edilmeli)
             elif cpu_percent > 85 or memory.percent > 85 or disk.percent > 85:
                 status = HealthStatus.DEGRADED
                 messages.append("System is degraded")
@@ -213,7 +201,6 @@ class HealthMonitor:
         """Tüm sağlık kontrollerini çalıştır"""
         logger.info("Running health checks...")
         
-        # Paralel olarak tüm kontrolleri çalıştır
         tasks = [
             self.check_kafka_health(),
             self.check_qdrant_health(),
@@ -229,7 +216,6 @@ class HealthMonitor:
             else:
                 logger.error(f"Health check failed with exception: {result}")
         
-        # Store as dict for internal use
         self.health_checks = {check.service: check for check in health_checks}
         self.last_check_time = time.time()
         
@@ -237,7 +223,6 @@ class HealthMonitor:
     
     async def get_overall_status(self) -> HealthStatus:
         """Genel sistem durumunu döndür"""
-        # Run health checks first to get current status
         health_checks = await self.run_all_checks()
         
         if not health_checks:
@@ -292,7 +277,6 @@ class HealthMonitor:
             try:
                 await self.run_all_checks()
                 
-                # Sonuçları logla
                 overall_status = await self.get_overall_status()
                 logger.info(f"Health check completed - Overall status: {overall_status.value}")
                 

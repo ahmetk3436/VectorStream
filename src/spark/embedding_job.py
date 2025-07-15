@@ -11,7 +11,6 @@ from sentence_transformers import SentenceTransformer
 import numpy as np
 from loguru import logger
 
-# Add project root to Python path
 project_root = Path(__file__).parent.parent.parent.absolute()
 sys.path.insert(0, str(project_root))
 
@@ -19,27 +18,15 @@ from src.utils.circuit_breaker import circuit_breaker, CircuitBreakerConfig
 from src.exceptions.embedding_exceptions import EmbeddingProcessingError
 
 class SparkEmbeddingJob:
-    """
-    Spark tabanlı dağıtık embedding işleme job'ı
-    
-    Bu sınıf büyük veri setlerini Spark kullanarak dağıtık şekilde işler
-    ve embedding'leri oluşturur.
-    """
     
     def __init__(self, spark_config: Dict[str, Any]):
-        """
-        Spark embedding job'ını başlat
-        
-        Args:
-            spark_config: Spark konfigürasyonu
-        """
         self.spark_config = spark_config
         self.spark: Optional[SparkSession] = None
         self.model_name = spark_config.get('embedding_model', 'all-MiniLM-L6-v2')
         self.batch_size = spark_config.get('batch_size', 1000)
         self.vector_size = spark_config.get('vector_size', 384)
         
-        # Circuit breaker for embedding operations
+
         self.circuit_breaker_config = CircuitBreakerConfig(
             failure_threshold=5,
             recovery_timeout=60.0,
@@ -47,16 +34,10 @@ class SparkEmbeddingJob:
         )
     
     def initialize_spark(self) -> SparkSession:
-        """
-        Spark session'ını başlat
-        
-        Returns:
-            SparkSession: Başlatılmış Spark session
-        """
         try:
             logger.info("Spark session başlatılıyor...")
             
-            # Set environment variables to bypass security issues
+
             os.environ.setdefault('HADOOP_HOME', '/tmp')
             os.environ.setdefault('HADOOP_CONF_DIR', '/tmp')
             os.environ.setdefault('SPARK_LOCAL_IP', '127.0.0.1')
@@ -85,11 +66,11 @@ class SparkEmbeddingJob:
                 .config("spark.sql.streaming.kafka.consumer.pollTimeoutMs", "5000") \
                 .config("spark.sql.streaming.kafka.consumer.fetchOffset.numRetries", "3") \
             
-            # Master URL'i ayarla
+
             master_url = self.spark_config.get('master', 'local[*]')
             spark_builder = spark_builder.master(master_url)
             
-            # Executor konfigürasyonu
+
             executor_memory = self.spark_config.get('executor_memory', '2g')
             executor_cores = self.spark_config.get('executor_cores', '2')
             
@@ -97,16 +78,16 @@ class SparkEmbeddingJob:
                 .config("spark.executor.memory", executor_memory) \
                 .config("spark.executor.cores", executor_cores)
             
-            # Driver konfigürasyonu
+
             driver_memory = self.spark_config.get('driver_memory', '1g')
             spark_builder = spark_builder.config("spark.driver.memory", driver_memory)
             
             self.spark = spark_builder.getOrCreate()
             
-            # Log level'ı ayarla - KAFKA-1894 uyarılarını azalt
+
             self.spark.sparkContext.setLogLevel("ERROR")  # WARN'den ERROR'a düşür
             
-            # Kafka-specific loggerları sustur
+
             log4j = self.spark.sparkContext._gateway.jvm.org.apache.log4j
             kafka_logger = log4j.LogManager.getLogger("org.apache.spark.sql.kafka010.KafkaDataConsumer")
             kafka_logger.setLevel(log4j.Level.ERROR)

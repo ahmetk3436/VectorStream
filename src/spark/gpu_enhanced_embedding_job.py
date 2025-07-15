@@ -11,7 +11,6 @@ import numpy as np
 from loguru import logger
 import time
 
-# Add project root to Python path
 project_root = Path(__file__).parent.parent.parent.absolute()
 sys.path.insert(0, str(project_root))
 
@@ -21,23 +20,11 @@ from src.spark.rapids_gpu_processor import RAPIDSGPUProcessor
 from src.spark.embedding_job import SparkEmbeddingJob
 
 class GPUEnhancedEmbeddingJob(SparkEmbeddingJob):
-    """
-    GPU-enhanced Spark embedding job with RAPIDS acceleration
-    
-    Bu sınıf SparkEmbeddingJob'ı extend ederek RAPIDS GPU acceleration ekler.
-    GPU mevcut değilse otomatik olarak parent class'ın CPU implementasyonuna fallback yapar.
-    """
     
     def __init__(self, spark_config: Dict[str, Any]):
-        """
-        GPU-enhanced embedding job'ını başlat
-        
-        Args:
-            spark_config: Spark konfigürasyonu
-        """
         super().__init__(spark_config)
         
-        # GPU processor'ı başlat
+
         self.gpu_processor = RAPIDSGPUProcessor({
             'gpu': spark_config.get('gpu', {}),
             'embedding': {
@@ -47,7 +34,7 @@ class GPUEnhancedEmbeddingJob(SparkEmbeddingJob):
             }
         })
         
-        # Performance tracking
+
         self.performance_stats = {
             'gpu_processing_times': [],
             'cpu_processing_times': [],

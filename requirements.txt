@@ -29,6 +29,7 @@ transformers
 prometheus-client
 kafka-python
 lz4
+numpy
 #cudf-cu
 #cuml-cu
 #cupy-cudax

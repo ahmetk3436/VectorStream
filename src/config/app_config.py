@@ -7,7 +7,6 @@ from typing import Dict, Any, Optional
 from loguru import logger
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
 
@@ -22,7 +21,6 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
     """
     config = {}
     
-    # Configuration from environment variables (DevOps requirement)
     default_config = {
         'spark': {
             'app_name': os.getenv('SPARK_APP_NAME', 'VectorStream-MLOps-Pipeline'),
@@ -110,11 +108,9 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
     
     config.update(default_config)
     
-    # Try to load from config file
     if config_path:
         config_file = Path(config_path)
     else:
-        # Try default locations
         possible_paths = [
             Path('config.yaml'),
             Path('config/config.yaml'),
@@ -137,7 +133,6 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
         except Exception as e:
             logger.warning(f"Failed to load config from {config_file}: {e}")
     
-    # Override with environment variables
     env_overrides = {
         'SPARK_MASTER': ('spark', 'master'),
         'QDRANT_HOST': ('qdrant', 'host'),
@@ -152,7 +147,6 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
         if value:
             if section not in config:
                 config[section] = {}
-            # Convert port to int if it's a port
             if key == 'port':
                 try:
                     value = int(value)

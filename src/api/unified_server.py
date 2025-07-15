@@ -1,12 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-NewMind AI – Unified API Server
-
-• Health, liveness, readiness ve ayrıntılı sistem bilgisi
-• Prometheus metrics (/metrics) – özel CollectorRegistry desteği
-"""
-
 import asyncio
 import gc
 import platform
@@ -38,9 +29,6 @@ class UnifiedServer:
     • /debug/config (hızlı debug konfigürasyonu)
     """
 
-    # ------------------------------------------------------------------ #
-    #                             Kurulum                                #
-    # ------------------------------------------------------------------ #
     def __init__(self, metrics: PrometheusMetrics, health_monitor: HealthMonitor):
         self.metrics = metrics
         self.health_monitor = health_monitor
@@ -56,16 +44,12 @@ class UnifiedServer:
             redoc_url="/redoc",
         )
 
-        # Arka-plan metrik iş parçacığı
         self.stop_metrics_update = threading.Event()
         self.metrics_update_thread: Optional[threading.Thread] = None
 
         self._setup_middleware()
         self._setup_routes()
 
-    # ------------------------------------------------------------------ #
-    #                        Middleware tanımları                         #
-    # ------------------------------------------------------------------ #
     def _setup_middleware(self):
         self.app.add_middleware(
             CORSMiddleware,
@@ -75,13 +59,9 @@ class UnifiedServer:
             allow_headers=["*"],
         )
 
-    # ------------------------------------------------------------------ #
-    #                         Route tanımları                             #
-    # ------------------------------------------------------------------ #
     def _setup_routes(self):
         """Tüm API rotalarını kaydeder"""
 
-        # ----------------------------- Root ----------------------------- #
         @self.app.get("/")
         async def root():
             return {
@@ -99,7 +79,6 @@ class UnifiedServer:
                 },
             }
 
-        # ----------------------- Detaylı health check ------------------- #
         @self.app.get("/health")
         async def health_check():
             try:
@@ -129,7 +108,6 @@ class UnifiedServer:
                 logger.error(f"Health check error: {exc}")
                 raise HTTPException(status_code=500, detail=f"Health check failed: {exc}")
 
-        # -------------------- Basit health (/health/simple) ------------- #
         @self.app.get("/health/simple")
         async def simple_health():
             try:
@@ -143,12 +121,10 @@ class UnifiedServer:
                 logger.error(f"Simple health check error: {exc}")
                 raise HTTPException(status_code=500, detail="Health check failed")
 
-        # -------------------------- Liveness probe ---------------------- #
         @self.app.get("/health/live")
         async def liveness_probe():
             return {"status": "alive"}
 
-        # ------------------------- Readiness probe ---------------------- #
         @self.app.get("/health/ready")
         async def readiness_probe():
             try:
@@ -162,18 +138,15 @@ class UnifiedServer:
                 logger.error(f"Readiness check error: {exc}")
                 raise HTTPException(status_code=500, detail="Readiness check failed")
 
-        # ----------------------- Prometheus metrics --------------------- #
         @self.app.get("/metrics")
         async def prometheus_metrics():
             """
             Prometheus metrics endpoint (özel registry ile)
             """
             try:
-                # Koşu-zamanı metriklerini güncelle
                 self.system_metrics_collector.update_prometheus_metrics()
                 self.metrics.update_uptime()
 
-                # 🔑 Özel CollectorRegistry kullan
                 metrics_data = generate_latest(self.metrics.registry)
                 return Response(content=metrics_data, media_type=CONTENT_TYPE_LATEST)
             except Exception as exc:
@@ -182,7 +155,6 @@ class UnifiedServer:
                     status_code=500, detail=f"Metrics generation failed: {exc}"
                 )
 
-        # ----------------------- Sistem bilgileri ----------------------- #
         @self.app.get("/system")
         async def system_info():
             try:
@@ -217,7 +189,6 @@ class UnifiedServer:
                 logger.error(f"System info error: {exc}")
                 raise HTTPException(status_code=500, detail=f"System info failed: {exc}")
 
-        # ---------------------- Manual GC tetikleme --------------------- #
         @self.app.post("/system/gc")
         async def trigger_garbage_collection():
             try:
@@ -231,7 +202,6 @@ class UnifiedServer:
                 logger.error(f"GC trigger error: {exc}")
                 raise HTTPException(status_code=500, detail=f"GC failed: {exc}")
 
-        # ----------------------- Debug konfig rotası -------------------- #
         @self.app.get("/debug/config")
         async def debug_config():
             try:
@@ -245,9 +215,6 @@ class UnifiedServer:
                 logger.error(f"Debug config error: {exc}")
                 raise HTTPException(status_code=500, detail=f"Debug config failed: {exc}")
 
-    # ------------------------------------------------------------------ #
-    #                Background metrics iş parçacığı                     #
-    # ------------------------------------------------------------------ #
     def start_background_metrics_update(self):
         """5 saniyede bir sistem + health metriklerini yeniler"""
 
@@ -257,7 +224,6 @@ class UnifiedServer:
                     self.system_metrics_collector.update_prometheus_metrics()
                     self.metrics.update_uptime()
 
-                    # Health-check metrikleri
                     try:
                         loop = asyncio.new_event_loop()
                         asyncio.set_event_loop(loop)
@@ -291,9 +257,6 @@ class UnifiedServer:
         except Exception as exc:
             logger.error(f"Health metrics update error: {exc}")
 
-    # ------------------------------------------------------------------ #
-    #                         Sunucu kontrolü                            #
-    # ------------------------------------------------------------------ #
     def start_server(self, host: str = "0.0.0.0", port: int = 8080):
         self.start_background_metrics_update()
         logger.info(f"🚀 Unified server listening on {host}:{port}")

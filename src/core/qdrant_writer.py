@@ -8,7 +8,6 @@ from loguru import logger
 import uuid
 import time
 
-# Proje root'unu Python path'ine ekle
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -20,15 +19,12 @@ from src.utils.error_handler import (
 
 class QdrantWriter:
     def __init__(self, config: Dict[str, Any]):
-        """High-performance Qdrant writer with gRPC optimization"""
         self.config = config
         self.host = config.get('host', 'localhost')
-        # Use gRPC port for 15-20% lower latency
-        self.port = config.get('port', 6334)  # gRPC port instead of 6333 HTTP
+        self.port = config.get('port', 6334)
         self.use_grpc = config.get('use_grpc', True)
         
-        # QdrantClient configuration for gRPC optimization
-        # port=6333 for REST API, grpc_port=6334 for gRPC API
+
         self.client = QdrantClient(
             host=self.host,
             port=6333,  # REST API port
@@ -37,12 +33,12 @@ class QdrantWriter:
         )
         self.collection_name = config['collection_name']
         
-        # Performance tracking
+
         self.total_vectors = 0
         self.total_time = 0.0
         self.start_time = None
         
-        # Circuit breaker setup
+
         self.circuit_breaker = circuit_breaker_manager.create_circuit_breaker(
             name="qdrant_writer",
             config=CircuitBreakerConfig(
@@ -59,8 +55,6 @@ class QdrantWriter:
         logger.info(f"   🎯 Target: 1200+ RPS (Qdrant optimized)")
         
     async def initialize_collection(self):
-        """Koleksiyonu oluştur"""
-        # Qdrant operations için retry policy
         qdrant_policy = RetryPolicy(
             max_attempts=4,
             base_delay=1.0,
@@ -86,8 +80,6 @@ class QdrantWriter:
             raise
     
     def _initialize_collection_impl(self):
-        """Koleksiyon oluşturma implementasyonu"""
-        # Koleksiyon var mı kontrol et
         collections = self.client.get_collections()
         collection_names = [col.name for col in collections.collections]
         
@@ -104,8 +96,6 @@ class QdrantWriter:
             logger.info(f"Koleksiyon zaten mevcut: {self.collection_name}")
             
     async def write_embeddings(self, embeddings: List[Dict[str, Any]], batch_size: int = 1000):
-        """Embedding'leri Qdrant'a yaz - Performans için büyük batch size destekli"""
-        # Write operations için aggressive retry policy
         write_policy = RetryPolicy(
             max_attempts=5,
             base_delay=0.5,
@@ -133,40 +123,38 @@ class QdrantWriter:
             return False
     
     def _write_embeddings_impl(self, embeddings: List[Dict[str, Any]], batch_size: int = 5000):
-        """High-performance write operation with gRPC and performance tracking"""
         start_time = time.time()
         
-        # Performance tracking
+
         if self.start_time is None:
             self.start_time = start_time
         
-        # Process in optimized 5000-vector chunks for 8k-10k vec/s throughput
+
         for i in range(0, len(embeddings), batch_size):
             batch = embeddings[i:i + batch_size]
             points = []
             
             for emb in batch:
                 point = PointStruct(
-                    id=emb.get('id', str(uuid.uuid4())),  # ID'yi embedding'den al
+                    id=emb.get('id', str(uuid.uuid4())),
                     vector=emb['vector'],
                     payload=emb.get('payload', emb.get('metadata', {}))
                 )
                 points.append(point)
                 
-            # High-performance batch upsert with gRPC and wait=False (8k-10k vec/s)
             operation_info = self.client.upsert(
                 collection_name=self.collection_name,
                 points=points,
-                wait=False  # Critical for 8k-10k vec/s burst performance
+                wait=False
             )
             
-            # Performance tracking
+
             elapsed_time = time.time() - start_time
             vector_count = len(points)
             self.total_vectors += vector_count
             self.total_time += elapsed_time
             
-            # Calculate performance metrics
+
             current_rate = vector_count / elapsed_time if elapsed_time > 0 else 0
             total_elapsed = time.time() - self.start_time
             avg_rate = self.total_vectors / total_elapsed if total_elapsed > 0 else 0
@@ -175,7 +163,7 @@ class QdrantWriter:
                 logger.debug(f"⚡ Batch {i//batch_size + 1} yazıldı: {len(points)} points (gRPC, wait=False)")
                 logger.debug(f"📊 Qdrant Performance: {current_rate:.1f} vec/s (current), {avg_rate:.1f} vec/s (avg)")
             
-            # Log performance milestones
+
             if self.total_vectors % 1000 == 0:
                 logger.info(f"📊 Qdrant Writer Performance:")
                 logger.info(f"   📈 Current: {current_rate:.1f} vec/s")
@@ -191,8 +179,6 @@ class QdrantWriter:
                     logger.warning(f"⚠️ Hedefin altında: {avg_rate:.1f} vec/s")
             
     async def search_similar(self, query_vector: List[float], limit: int = 5):
-        """Benzer vektörleri ara"""
-        # Search operations için conservative retry policy
         search_policy = RetryPolicy(
             max_attempts=3,
             base_delay=1.0,
@@ -221,7 +207,6 @@ class QdrantWriter:
             return []
     
     def _search_similar_impl(self, query_vector: List[float], limit: int = 5):
-        """Arama implementasyonu"""
         return self.client.search(
             collection_name=self.collection_name,
             query_vector=query_vector,
@@ -229,7 +214,6 @@ class QdrantWriter:
         )
     
     async def close(self):
-        """QdrantWriter'ı kapat"""
         try:
             if hasattr(self.client, 'close'):
                 self.client.close()

@@ -30,37 +30,29 @@ from src.utils.error_handler import retry_with_policy, RetryPolicy, BackoffStrat
 
 @dataclass
 class BatchConfig:
-    """Batch processing konfigürasyonu"""
-    # Batch boyutları
     min_batch_size: int = 1000
     max_batch_size: int = 50000
     adaptive_batch_size: bool = True
     
-    # Memory management
     max_memory_usage_percent: float = 80.0
-    memory_check_interval: int = 100  # Her 100 kayıtta bir kontrol
+    memory_check_interval: int = 100
     
-    # Parallel processing
     max_parallel_files: int = 4
     enable_parallel_processing: bool = True
     
-    # Performance optimization
     enable_caching: bool = True
     cache_storage_level: str = "MEMORY_AND_DISK_SER"
     enable_compression: bool = True
     compression_codec: str = "snappy"
     
-    # Monitoring
     enable_metrics: bool = True
-    metrics_interval: int = 60  # seconds
+    metrics_interval: int = 60
     
-    # Checkpointing
-    checkpoint_interval: int = 1000  # Her 1000 kayıtta bir
+    checkpoint_interval: int = 1000
     enable_incremental_checkpoints: bool = True
 
 @dataclass
 class ProcessingMetrics:
-    """İşleme metrikleri"""
     start_time: datetime
     end_time: Optional[datetime] = None
     total_files: int = 0
@@ -76,7 +68,6 @@ class ProcessingMetrics:
     throughput_records_per_second: float = 0.0
     
     def calculate_final_metrics(self):
-        """Final metrikleri hesapla"""
         if self.end_time and self.processed_files > 0:
             total_time = (self.end_time - self.start_time).total_seconds()
             self.avg_processing_time_per_file = total_time / self.processed_files
@@ -86,29 +77,13 @@ class ProcessingMetrics:
                 self.throughput_records_per_second = self.processed_records / total_time
 
 class OptimizedSparkBatchProcessor:
-    """
-    Optimize edilmiş Spark tabanlı batch işleme sistemi
-    
-    Bu sınıf yüksek performanslı batch processing için optimize edilmiştir:
-    - Adaptive batch sizing
-    - Memory-efficient processing
-    - Parallel file processing
-    - Real-time performance monitoring
-    - Advanced caching strategies
-    """
     
     def __init__(self, config: Dict[str, Any]):
-        """
-        Optimized batch processor'ı başlat
-        
-        Args:
-            config: Sistem konfigürasyonu
-        """
         self.config = config
         self.spark_config = config.get('spark', {})
         self.qdrant_config = config.get('qdrant', {})
         
-        # Batch konfigürasyonu
+
         batch_config_dict = config.get('batch', {})
         self.batch_config = BatchConfig(
             min_batch_size=batch_config_dict.get('min_size', 1000),
@@ -121,32 +96,32 @@ class OptimizedSparkBatchProcessor:
             enable_metrics=batch_config_dict.get('enable_metrics', True)
         )
         
-        # Paths
+
         self.input_path = batch_config_dict.get('input_path', '/data/input')
         self.output_path = batch_config_dict.get('output_path', '/data/output')
         self.checkpoint_path = batch_config_dict.get('checkpoint_path', '/data/checkpoints')
         self.failed_path = batch_config_dict.get('failed_path', '/data/failed')
         self.metrics_path = batch_config_dict.get('metrics_path', '/data/metrics')
         
-        # Components
+
         self.embedding_job = SparkEmbeddingJob(self.spark_config)
         
-        # Circuit breaker
+
         self.circuit_breaker_config = CircuitBreakerConfig(
             failure_threshold=3,
             recovery_timeout=300.0,
             timeout=3600.0  # 1 hour for large batches
         )
         
-        # Metrics and monitoring
+
         self.current_metrics: Optional[ProcessingMetrics] = None
         self.metrics_lock = threading.Lock()
         self.stop_monitoring = threading.Event()
         
-        # Current batch size (adaptive)
+
         self.current_batch_size = self.batch_config.min_batch_size
         
-        # Retry policy for batch operations
+
         self.batch_retry_policy = RetryPolicy(
             max_attempts=3,
             base_delay=30.0,
@@ -158,19 +133,16 @@ class OptimizedSparkBatchProcessor:
         )
     
     def initialize(self):
-        """
-        Optimized batch processor'ı başlat
-        """
         try:
             logger.info("Optimized batch processor başlatılıyor...")
             
-            # Spark session'ını optimize et
+
             self._optimize_spark_session()
             
-            # Gerekli dizinleri oluştur
+
             self._create_directories()
             
-            # Performance monitoring başlat
+
             if self.batch_config.enable_metrics:
                 self._start_monitoring()
             

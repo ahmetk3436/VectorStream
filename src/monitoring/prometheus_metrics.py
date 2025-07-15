@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-NewMind AI – Prometheus metrics collector
-Tüm dashboard’larla uyumlu hâle getirilmiş sürüm.
-"""
-
 import time
 from typing import Any, Dict, Optional, cast
 
@@ -22,32 +15,20 @@ from loguru import logger
 
 class PrometheusMetrics:
     """Prometheus metrics collector"""
-
-    # ------------------------------------------------------------------ #
-    #                            Kurulum                                 #
-    # ------------------------------------------------------------------ #
     def __init__(self, registry: Optional[CollectorRegistry] = None):
-        # Özel registry kullan; yoksa yeni oluştur
         self.registry = registry or CollectorRegistry()
         self._start_time = time.time()
         self.setup_metrics()
 
-    # ------------------------------------------------------------------ #
-    #                      METRICS TANIMLARI                             #
-    # ------------------------------------------------------------------ #
     def setup_metrics(self):
         """Tüm metrik tanımlarını oluştur (dashboard geriye-uyumluluk dâhil)"""
 
-        # ------------------------------------------------------------------ #
-        # 1) Sistem / Uygulama bilgileri
-        # ------------------------------------------------------------------ #
         self.system_info = Info(
             "newmind_ai_system_information",
             "System information",
             registry=self.registry,
         )
 
-        # Application uptime
         self.application_start_time = Gauge(
             "newmind_ai_application_start_time_seconds",
             "Application start time in Unix timestamp",
@@ -60,9 +41,6 @@ class PrometheusMetrics:
         )
         self.application_start_time.set(self._start_time)
 
-        # ------------------------------------------------------------------ #
-        # 2) Kafka (high-perf + dashboard uyumlu)
-        # ------------------------------------------------------------------ #
         self.kafka_messages_consumed = Counter(
             "newmind_ai_kafka_messages_consumed_total",
             "Total number of Kafka messages consumed (confluent-kafka)",
@@ -105,7 +83,6 @@ class PrometheusMetrics:
             registry=self.registry,
         )
 
-        # ===== ▼▼▼  DASHBOARD GERİYE-UYUMLU EK METRİKLER  ▼▼▼ ============= #
         self.kafka_processing_duration = Histogram(
             "newmind_ai_kafka_processing_duration_seconds",
             "Kafka processing duration (for Grafana dashboards)",
@@ -113,7 +90,6 @@ class PrometheusMetrics:
             buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0],
             registry=self.registry,
         )
-        # → Histogram sayesinde _bucket / _sum / _count otomatik oluşur
         self.kafka_consumergroup_lag = Gauge(
             "kafka_consumergroup_lag",
             "External Kafka consumer-group lag (dashboard compat)",
@@ -126,11 +102,7 @@ class PrometheusMetrics:
             ["topic"],
             registry=self.registry,
         )
-        # ===== ▲▲▲ ========================================================= #
 
-        # ------------------------------------------------------------------ #
-        # 3) Qdrant (high-perf + dashboard uyumlu)
-        # ------------------------------------------------------------------ #
         self.qdrant_operations = Counter(
             "newmind_ai_qdrant_operations_total",
             "Total Qdrant operations",
@@ -195,7 +167,6 @@ class PrometheusMetrics:
             registry=self.registry,
         )
 
-        # ===== ▼▼▼  DASHBOARD GERİYE-UYUMLU EK METRİKLER  ▼▼▼ ============= #
         self.qdrant_operations_external = Counter(
             "qdrant_operations_total",
             "External Qdrant operations (dashboard compat)",
@@ -215,11 +186,7 @@ class PrometheusMetrics:
             ["collection"],
             registry=self.registry,
         )
-        # ===== ▲▲▲ ========================================================= #
 
-        # ------------------------------------------------------------------ #
-        # 4) Embedding / Pipeline (kısaltılmış – önceki tanımlar korunuyor)
-        # ------------------------------------------------------------------ #
         self.embedding_processing_duration = Histogram(
             "newmind_ai_embedding_processing_duration_seconds",
             "Embedding processing latency",
@@ -252,9 +219,6 @@ class PrometheusMetrics:
             registry=self.registry,
         )
 
-        # ------------------------------------------------------------------ #
-        # 5) Sistem kaynak kullanımı
-        # ------------------------------------------------------------------ #
         self.system_cpu_usage = Gauge(
             "newmind_ai_system_cpu_usage_percent",
             "CPU usage (%)",
@@ -271,9 +235,6 @@ class PrometheusMetrics:
             registry=self.registry,
         )
 
-        # ------------------------------------------------------------------ #
-        # 6) Health-check metrikleri
-        # ------------------------------------------------------------------ #
         self.health_check_status = Gauge(
             "newmind_ai_health_check_status",
             "Health-check status (1 = healthy)",
@@ -288,9 +249,6 @@ class PrometheusMetrics:
             registry=self.registry,
         )
 
-        # ------------------------------------------------------------------ #
-        # 7) Missing metrics for test compatibility
-        # ------------------------------------------------------------------ #
         self.qdrant_collection_points = Gauge(
             "newmind_ai_qdrant_collection_points",
             "Number of points in Qdrant collection",
@@ -317,9 +275,6 @@ class PrometheusMetrics:
             registry=self.registry,
         )
 
-    # ------------------------------------------------------------------ #
-    #                        Yardımcı metotlar                           #
-    # ------------------------------------------------------------------ #
     def update_uptime(self):
         """Uygulama uptime’ını güncelle"""
         uptime = time.time() - self._start_time
@@ -341,10 +296,6 @@ class PrometheusMetrics:
         """Qdrant bağlantı durumunu ayarla"""
         self.qdrant_connection_status.set(1 if connected else 0)
 
-    # ------------------------------------------------------------------ #
-    #                    RECORD METHODS FOR PIPELINE                     #
-    # ------------------------------------------------------------------ #
-    
     def record_kafka_ingest_latency(self, topic: str, partition: str, group_id: str, duration: float):
         """Record Kafka message ingest latency"""
         self.kafka_processing_duration.labels(topic=topic).observe(duration)
@@ -398,29 +349,18 @@ class PrometheusMetrics:
     def record_kafka_message_failed(self, topic: str, error_type: str):
         """Record Kafka message processing failure"""
         self.kafka_messages_failed.labels(topic=topic, error_type=error_type).inc()
-
-    # -------------------   (↳ daha önceki metotlar)   ------------------- #
-    # Mevcut public API’nin geri kalanı **değişmedi**; kısalık için
-    # burada tekrar listelenmedi.
-    # ------------------------------------------------------------------ #
-
-
-# ---------------------------------------------------------------------- #
-#              Yardımcı MetricsServer (Pylint fix)                       #
-# ---------------------------------------------------------------------- #
 class MetricsServer:
     """Prometheus metrics HTTP server"""
 
     def __init__(self, metrics: "PrometheusMetrics" = None, port: int = 9090):
         self.metrics = metrics or PrometheusMetrics()
         self.port = port
-        self.httpd: Optional[Any] = None  # Any -> HTTPServer (run-time)
+        self.httpd: Optional[Any] = None 
         self.thread: Optional[Any] = None
 
     def start(self):
         """Sunucuyu başlat ve HTTPServer nesnesini (varsa) sakla."""
         if self.httpd is None:
-            # Pylint: start_http_server() dönüşü None görünüyor → cast ile ört
             self.httpd = cast(
                 Any, start_http_server(self.port, registry=self.metrics.registry)
             )
@@ -447,10 +387,6 @@ class MetricsServer:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
 
-
-# ---------------------------------------------------------------------- #
-#                   Global helper (değişmedi)                            #
-# ---------------------------------------------------------------------- #
 _metrics_instance: Optional[PrometheusMetrics] = None
 
 

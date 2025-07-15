@@ -194,6 +194,10 @@ newmind-ai/
 ### 1. Servisleri Başlat
 ```bash
 docker-compose up -d
+
+python3.10 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ### 2. E-ticaret Demo EVENT Verisi Üret

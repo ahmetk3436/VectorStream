@@ -1,15 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Distributed Embedding Processor
-Performans için executor-based embedding processing
-
-Bu modül kullanıcının önerdiği çözümü uygular:
-- foreachPartition ile executor'da embedding hesaplama
-- Driver darboğazını ortadan kaldırma
-- Paralel embedding processing
-"""
-
 from typing import Iterator, Dict, Any, List
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import pandas_udf, col, concat_ws, udf, current_timestamp, lit
@@ -42,16 +30,13 @@ class DistributedEmbeddingProcessor:
             Bu fonksiyon executor'larda çalışır
             """
             try:
-                # Model'i lazy loading ile yükle
                 from sentence_transformers import SentenceTransformer
                 model = SentenceTransformer(self.model_name)
                 
-                # Batch processing
                 text_list = texts.fillna("").tolist()
                 if not text_list:
                     return pd.Series([[0.0] * 384] * len(texts))
                 
-                # Embeddings'i batch olarak hesapla
                 embeddings = model.encode(
                     text_list,
                     batch_size=self.batch_size,
@@ -59,15 +44,12 @@ class DistributedEmbeddingProcessor:
                     convert_to_tensor=False
                 )
                 
-                # Pandas Series olarak döndür
                 return pd.Series([emb.tolist() for emb in embeddings])
                 
             except Exception as e:
                 logger.error(f"Embedding processing error: {e}")
-                # Fallback: dummy embeddings
                 return pd.Series([[0.0] * 384] * len(texts))
         
-        # Content column'unu oluştur
         content_df = df.withColumn(
             "content",
             concat_ws(
@@ -80,7 +62,6 @@ class DistributedEmbeddingProcessor:
             )
         )
         
-        # Embeddings'i hesapla
         result_df = content_df.withColumn(
             "embedding",
             create_embeddings_vectorized(col("content"))
@@ -99,16 +80,13 @@ class DistributedEmbeddingProcessor:
             Her partition'ı işle - executor'da çalışır
             """
             try:
-                # Lazy imports - executor'da yükle
                 from sentence_transformers import SentenceTransformer
                 from src.core.qdrant_writer import QdrantWriter
                 import asyncio
                 
-                # Model ve client'ı partition başında yükle
                 model = SentenceTransformer(self.model_name)
                 qdrant_client = QdrantWriter(qdrant_config)
                 
-                # Event loop oluştur
                 try:
                     loop = asyncio.get_event_loop()
                 except RuntimeError:
@@ -119,7 +97,6 @@ class DistributedEmbeddingProcessor:
                     if pdf.empty:
                         continue
                     
-                    # Content oluştur
                     pdf['content'] = (
                         pdf['event_type'].fillna('') + ' ' +
                         pdf['product.name'].fillna('') + ' ' +
@@ -127,7 +104,6 @@ class DistributedEmbeddingProcessor:
                         pdf['product.category'].fillna('')
                     ).str.strip()
                     
-                    # Batch embedding
                     texts = pdf['content'].tolist()
                     embeddings = model.encode(
                         texts,
@@ -136,7 +112,6 @@ class DistributedEmbeddingProcessor:
                         convert_to_tensor=False
                     )
                     
-                    # Qdrant data hazırla
                     embeddings_data = []
                     for idx, (_, row) in enumerate(pdf.iterrows()):
                         embeddings_data.append({
@@ -157,7 +132,6 @@ class DistributedEmbeddingProcessor:
                             }
                         })
                     
-                    # Async write to Qdrant
                     async def write_batch():
                         await qdrant_client.write_embeddings(embeddings_data, batch_size=2000)
                     
@@ -168,7 +142,6 @@ class DistributedEmbeddingProcessor:
                 logger.error(f"Partition processing error: {e}")
                 raise
         
-        # mapInPandas kullanarak distributed processing
         schema = StructType([
             StructField("status", StringType(), True)
         ])
@@ -177,9 +150,8 @@ class DistributedEmbeddingProcessor:
             process_partition(iterator)
             yield pd.DataFrame([{"status": "completed"}])
         
-        # Execute the distributed processing
         result_df = df.mapInPandas(map_partition, schema)
-        result_df.collect()  # Trigger execution
+        result_df.collect() 
         
         logger.info("✅ Distributed embedding processing completed")
 
@@ -198,7 +170,6 @@ def create_optimized_embedding_pipeline(df: DataFrame, config: Dict[str, Any], q
     """
     processor = DistributedEmbeddingProcessor(config)
     
-    # Pandas UDF ile vectorized processing
     return processor.process_with_pandas_udf(df)
 
 
