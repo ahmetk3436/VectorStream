@@ -2776,3 +2776,15 @@
 2025-07-15 04:15:11 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Fail once
 2025-07-15 04:15:11 | INFO | src.utils.error_handler:sync_wrapper:108 | Retrying test_func in 1.00s (attempt 2/3)
 2025-07-15 04:15:12 | WARNING | src.utils.error_handler:wrapper:201 | Using fallback value for test_func due to: Always fails
+2025-07-15 04:42:36 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka' oluşturuldu
+2025-07-15 04:42:36 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'kafka' OPEN durumuna geçti. Sonraki deneme: 60.0 saniye sonra
+2025-07-15 04:42:36 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant' oluşturuldu
+2025-07-15 04:42:36 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'qdrant' OPEN durumuna geçti. Sonraki deneme: 60.0 saniye sonra
+2025-07-15 04:42:36 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for kafka
+2025-07-15 04:42:36 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for kafka
+2025-07-15 04:42:47 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for kafka
+2025-07-15 04:42:47 | INFO | tests.unit.test_chaos_engineering:recover_service:114 | Service kafka recovered
+2025-07-15 04:42:47 | INFO | tests.unit.test_chaos_engineering:inject_network_timeout:69 | Injecting network timeout: 0.1s delay
+2025-07-15 04:42:48 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for test_service
+2025-07-15 04:42:48 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for test_service
+2025-07-15 04:42:51 | INFO | tests.unit.test_chaos_engineering:run_network_partition_test:222 | Starting network partition test
