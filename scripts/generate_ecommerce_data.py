@@ -18,10 +18,8 @@ from kafka import KafkaProducer
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables from .env file (DevOps requirement)
 load_dotenv()
 
-# Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -47,7 +45,6 @@ class ECommerceDataGenerator:
     """
     
     def __init__(self):
-        # Product catalog with detailed descriptions for embedding (Task requirement)
         self.products = [
             {
                 "id": "prod_001",
@@ -121,26 +118,21 @@ class ECommerceDataGenerator:
             }
         ]
         
-        # Event types (Task requirement)
         self.event_types = [
-            "view",            # Customer views product
-            "add_to_cart",     # Customer adds product to cart
-            "remove_from_cart", # Customer removes product from cart
-            "purchase",        # Customer purchases product
-            "wishlist_add",    # Customer adds product to wishlist
-            "search"           # Customer searches for products
+            "view",            
+            "add_to_cart",     
+            "remove_from_cart",
+            "purchase",      
+            "wishlist_add",   
+            "search"        
         ]
         
-        # User IDs (Task requirement)
         self.users = [f"user{i:03d}" for i in range(1, 1001)]  # user001 to user1000
         
-        # Session IDs
         self.sessions = [f"session{i:04d}" for i in range(1, 10001)]  # session0001 to session10000
         
-        # Payment methods for purchase events
         self.payment_methods = ["credit_card", "debit_card", "paypal", "bank_transfer", "cash_on_delivery"]
         
-        # Sources for tracking
         self.sources = ["web", "mobile_app", "tablet"]
         
     def generate_event(self) -> Dict[str, Any]:
@@ -218,7 +210,6 @@ class ECommerceDataGenerator:
     def send_to_kafka(self, events: List[Dict[str, Any]], 
                      topic: str = None, bootstrap_servers: str = None):
         """Send events to Kafka topic (Task requirement)"""
-        # Use environment variables (DevOps requirement)
         topic = topic or os.getenv('KAFKA_TOPIC', 'ecommerce-events')
         bootstrap_servers = bootstrap_servers or os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
         

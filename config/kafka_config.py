@@ -18,7 +18,6 @@ class KafkaConfig:
     
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]):
-        # Filter out nested consumer config and other non-constructor params
         filtered_config = {
             k: v for k, v in config_dict.items() 
             if k in ['bootstrap_servers', 'topic', 'group_id', 'auto_offset_reset', 

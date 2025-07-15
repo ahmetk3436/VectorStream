@@ -1,4 +1,3 @@
-# High-performance optimizations
 confluent-kafka>=2.3.0
 python-snappy>=0.6.1
 qdrant-client[grpc]>=1.7.0
@@ -8,7 +7,6 @@ onnxruntime>=1.16.0
 optimum[onnxruntime]>=1.15.0
 sentence-transformers>=2.2.2
 
-# Core dependencies
 pyspark
 numpy
 pandas
@@ -21,66 +19,52 @@ aiohttp
 asyncio
 python-dotenv>=1.0.0
 
-# Web framework and server
 fastapi
 uvicorn[standard]
 
-# System monitoring
 psutil
 
-# Data validation
 pydantic
 pydantic-settings
 
-# Testing dependencies
 pytest
 pytest-asyncio
 pytest-mock
 httpx
 
-# Development dependencies
 black
 flake8
 mypy
 isort
 
-# Additional utilities
 requests
 click
 rich
 transformers
 datasets
 
-# RAPIDS GPU acceleration
 #cudf-cu
 #cuml-cu
 #cupy-cudax
 #rmm-cu
 
-# Sentence Transformers for embeddings
 sentence-transformers
 torch
 torchvision
 
-# Additional required packages
 transformers
 
-# Additional Spark dependencies
 pyj
 findspark
 
-# Monitoring and metrics
 prometheus-client
 grafana-api
 
-# Circuit breaker and resilience
 circuitbreaker
 tenacity
 
-# Performance monitoring
 memory-profiler
 line-profiler
 
-# Additional async utilities
 anyio
 lz4

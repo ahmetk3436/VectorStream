@@ -71,10 +71,6 @@ logger = logging.getLogger("live_event_sender_fast")
 class EventGeneratorProtocol:
     def generate_event(self) -> dict:  
         raise NotImplementedError
-
-# ──────────────────────────────────────────────
-# Ana gönderici
-# ──────────────────────────────────────────────
 @dataclass
 class LiveEventSender:
     generator: EventGeneratorProtocol = field(default_factory=ECommerceDataGenerator)
@@ -93,12 +89,10 @@ class LiveEventSender:
     max_in_flight: int = int(getenv("KAFKA_MAX_IN_FLIGHT", 10))
     retries: int = int(getenv("KAFKA_RETRIES", 5))
 
-    # runtime
     _producer: KafkaProducer | None = field(init=False, default=None)
     _running: bool = field(init=False, default=False)
     acks: int | str = field(init=False)
 
-    # ───────── context manager ─────────
     def __enter__(self) -> "LiveEventSender":
         self.acks = _parse_acks(getenv("KAFKA_ACKS", "1"))
         self._producer = KafkaProducer(
@@ -164,7 +158,6 @@ class LiveEventSender:
             self._running = False
             monitor_thread.join()
 
-    # ───────── send loops ─────────
     def _send_continuous(self, eps: int, total: int, no_limit: bool) -> None:
         assert self._producer
         start = time.time()
@@ -216,7 +209,6 @@ class LiveEventSender:
     def _handle_future(self, fut) -> None:
         fut.add_errback(lambda exc: logger.error("Kafka send failed: %s", exc))
 
-    # ───────── metrics monitor ─────────
     def _monitor_loop(self, interval_sec: int) -> None:
         logger.info("Metrics monitor every %ds", interval_sec)
         last_cons = last_proc = 0
@@ -254,9 +246,6 @@ class LiveEventSender:
                 proc = int(float(line.split()[-1]))
         return {"consumed": cons, "processed": proc}
 
-# ──────────────────────────────────────────────
-# CLI helpers
-# ──────────────────────────────────────────────
 def _build_cli() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser("Live Event Stream Demo (fast)")
     p.add_argument("-r", "--rate", type=int, default=1_000, help="events per second (target)")
