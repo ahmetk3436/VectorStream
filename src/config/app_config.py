@@ -118,7 +118,8 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
         possible_paths = [
             Path('config.yaml'),
             Path('config/config.yaml'),
-            Path('src/config/config.yaml')
+            Path('src/config/config.yaml'),
+            Path('config/app_config.yaml')
         ]
         config_file = None
         for path in possible_paths:
