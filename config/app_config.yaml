@@ -33,9 +33,9 @@ spark:
     max_executors: 16
     streaming:
       batch_interval: 0.5
-      max_offsets_per_trigger: 50000
+      max_offsets_per_trigger: 100000
     checkpoint_location: "/tmp/spark-checkpoint-vectorstream"
-    trigger_interval: "1 seconds"
+    trigger_interval: "10 seconds"
     max_offsets_per_trigger: max_offsets_per_trigger
     output_mode: "append"
   kafka:

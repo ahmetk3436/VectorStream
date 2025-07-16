@@ -110,7 +110,7 @@ class VectorStreamPipeline:
             config['spark'] = {
                 'app_name': 'VectorStream-MLOps-Pipeline',
                 'batch_interval': '10 seconds',  # Task requirement
-                'max_offsets_per_trigger': 1000
+                'max_offsets_per_trigger': 100000
             }
             
         # Task requirement: Embedding configuration

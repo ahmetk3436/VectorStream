@@ -122,7 +122,7 @@ class KafkaSparkConnector:
 
     @circuit_breaker("kafka_stream_processing")
     def start_streaming_pipeline(
-        self, output_mode: str = "append", trigger_interval: str = "1 seconds"  # 10 -> 1 saniye
+        self, output_mode: str = "append", trigger_interval: str = "10 seconds"  # Task gereksinimi: 10 saniye
     ) -> StreamingQuery:
         """
         Read Kafka, parse events, create embeddings and dispatch each micro-batch
@@ -203,7 +203,7 @@ class KafkaSparkConnector:
         spark.conf.set("spark.sql.streaming.kafka.useUninterruptibleThread", "true")
         spark.conf.set("spark.streaming.stopGracefullyOnShutdown", "true")
         # Performans iyileştirmesi: max_offsets_per_trigger artırıldı
-        max_offsets = self.streaming_config.get("max_offsets_per_trigger", 50000)  # 1000 -> 20000
+        max_offsets = self.streaming_config.get("max_offsets_per_trigger", 100000)  # 1000 -> 20000
         spark.conf.set("spark.streaming.maxOffsetsPerTrigger", str(max_offsets))
 
     def _create_kafka_stream(self) -> DataFrame:
@@ -215,7 +215,7 @@ class KafkaSparkConnector:
             .option("startingOffsets", "latest")
             .option("failOnDataLoss", "false")
             .option("kafka.consumer.group.id", self.consumer_group)
-            .option("maxOffsetsPerTrigger", self.streaming_config.get("max_offsets_per_trigger", 20000))  # 1000 -> 20000
+            .option("maxOffsetsPerTrigger", self.streaming_config.get("max_offsets_per_trigger", 100000))  # 1000 -> 20000
             .option("kafka.fetch.max.bytes", "10485760")  # 10 MB
             .option("kafka.max.poll.records", "10000")
             .load()

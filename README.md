@@ -1,46 +1,43 @@
-# 🛒 VectorStream: Real-time E-Commerce Behavior Analysis Pipeline
-
-**MLOps Task Implementation - Real-time Data Processing Pipeline**
+# 🛒 VectorStream: Gerçek Zamanlı E-Ticaret Davranış Analizi Hattı
+**MLOps Görev Uygulaması - Gerçek Zamanlı Veri İşleme Hattı**
 
 🎯 **Apache Spark Structured Streaming + Kafka + Sentence Transformers + Qdrant** 
 
-## ⚡ Quick Start
-
-### 1. Start Infrastructure Services
+### 1. Servisleri Başlat
 ```bash
-# Start Kafka, Qdrant, and monitoring services
-docker-compose up -d
+docker compose up -d
+
+python3.10 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-### 2. Generate E-Commerce Demo Events
+### 2. E-ticaret Demo EVENT Verisi Üret
 ```bash
-# Generate events matching task requirements
-python scripts/live_event_demo.py --count 10000 --burst
+python scripts/live_event_demo.py -c 50000 --burst --no-rate-limit  --compression lz4
 ```
 
-### 3. Start VectorStream Pipeline
+### 3. Docker Üzerinde Ayağa Kalkan VectorStreamApp Eventleri Otomatik Olarak Consume Edecek
 ```bash
-python src/main.py
+docker logs app -f
 ```
 
-## 🌐 Monitoring Interfaces
-
-Access these dashboards to monitor the pipeline:
-- **Pipeline API**: http://localhost:8080 (metrics, health, docs)
-- **Kafka UI**: http://localhost:8090 (message flows)
-- **Qdrant Dashboard**: http://localhost:6333/dashboard (vector storage)
+## 🌐 İzleme Arayüzleri
+Bu kontrol panellerine erişerek hattı izleyin:
+- **Hattı API'si**: http://localhost:8080 (metrikler, sağlık, belgeler)
+- **Kafka UI**: http://localhost:8090 (mesaj akışları)
+- **Qdrant Kontrol Paneli**: http://localhost:6333/dashboard (vektör depolama)
 - **Grafana**: http://localhost:3000 (admin/admin123)
-- **Spark UI**: http://localhost:4040 (streaming jobs)
+- **Spark UI**: http://localhost:4040 (akış işleri)
 
-## 📊 Task Requirements Validation
+## 📊 Görev Gereksinimleri Doğrulaması
+### Performans Hedefleri
+- **Verim**: Minimum 1000 olay/saniye ✅
+- **Gecikme**: Maksimum 30 saniye uçtan uca ✅  
+- **Bellek**: İzleme ile etkin işleme ✅
+- **GPU**: Kullanılabilir olduğunda RAPIDS hızlandırma ✅ (test edilmedi)
 
-### Performance Targets
-- **Throughput**: Minimum 1000 events/second ✅
-- **Latency**: Maximum 30 seconds end-to-end ✅  
-- **Memory**: Efficient processing with monitoring ✅
-- **GPU**: RAPIDS acceleration when available ✅ (not tested)
-
-### Event Structure (Task Compliant)
+### Olay Yapısı (Görev Uyumlu)
 ```json
 {
   "event_id": "uuid",
@@ -58,49 +55,48 @@ Access these dashboards to monitor the pipeline:
 }
 ```
 
-## 🏗️ Architecture
-
-### 📊 System Architecture
+## 🏗️ Mimari
+### 📊 Sistem Mimarisi
 ```mermaid
 graph TB
     %% External Data Sources
-    DS[Data Sources] --> K[Kafka Cluster]
+    DS[Veri Kaynakları] --> K[Kafka Kümesi]
     
     %% Kafka Layer
-    K --> KC[Kafka Consumer]
+    K --> KC[Kafka Tüketici]
     K --> KUI[Kafka UI<br/>:8080]
     
     %% Processing Layer
-    KC --> EP[Embedding Processor<br/>Spark + RAPIDS]
-    EP --> QW[Qdrant Writer]
+    KC --> EP[Gömme İşleyici<br/>Spark + RAPIDS]
+    EP --> QW[Qdrant Yazıcı]
     
     %% Storage Layer
-    QW --> Q[Qdrant Vector DB<br/>:6333]
+    QW --> Q[Qdrant Vektör DB<br/>:6333]
     
     %% Monitoring & Health
-    HC[Health Check] --> KC
+    HC[Sağlık Kontrolü] --> KC
     HC --> EP
     HC --> QW
     HC --> Q
     
-    PM[Prometheus Metrics<br/>:9090] --> KC
+    PM[Prometheus Metrikleri<br/>:9090] --> KC
     PM --> EP
     PM --> QW
     
-    G[Grafana Dashboard<br/>:3000] --> PM
+    G[Grafana Kontrol Paneli<br/>:3000] --> PM
     
     %% Configuration
-    CONFIG[Configuration<br/>app_config.yaml] --> KC
+    CONFIG[Konfigürasyon<br/>app_config.yaml] --> KC
     CONFIG --> EP
     CONFIG --> QW
     
     %% Error Handling
-    EH[Error Handler] --> KC
+    EH[Hata İşleyici] --> KC
     EH --> EP
     EH --> QW
     
     %% Logging
-    LOG[Centralized Logger] --> KC
+    LOG[Merkezi Günlükleyici] --> KC
     LOG --> EP
     LOG --> QW
     LOG --> EH
@@ -111,41 +107,40 @@ graph TB
     class HC,PM,G,LOG monitoring
     class CONFIG,EH config
 ```
-
-#### Data Flow Diagram
+#### Veri Akış Diyagramı
 ```mermaid
 sequenceDiagram
-    participant DS as Data Sources
+    participant DS as Veri Kaynakları
     participant K as Kafka
-    participant KC as Kafka Consumer
-    participant EP as Embedding Processor
+    participant KC as Kafka Tüketici
+    participant EP as Gömme İşleyici
     participant S as Spark/RAPIDS
-    participant QW as Qdrant Writer
+    participant QW as Qdrant Yazıcı
     participant Q as Qdrant DB
-    participant M as Monitoring
+    participant M as İzleme
     
-    DS->>K: Send Raw Data
-    KC->>K: Poll Messages
-    K-->>KC: Return Batch
-    KC->>EP: Forward Message
-    EP->>S: Submit Processing Job
-    S->>S: Generate Embeddings
-    S-->>EP: Return Embeddings
-    EP->>QW: Send Embeddings
-    QW->>Q: Insert Vectors
-    Q-->>QW: Confirm Insert
+    DS->>K: Ham Veri Gönder
+    KC->>K: Mesajları Çek
+    K-->>KC: Toplu Döndür
+    KC->>EP: Mesaj İlet
+    EP->>S: İşleme İşini Gönder
+    S->>S: Gömme Üret
+    S-->>EP: Gömme Döndür
+    EP->>QW: Gömme Gönder
+    QW->>Q: Vektör Ekle
+    Q-->>QW: Ekleme Onayla
     
-    par Continuous Monitoring
-        KC->>M: Send Metrics
-        EP->>M: Send Metrics
-        QW->>M: Send Metrics
+    par Sürekli İzleme
+        KC->>M: Metrik Gönder
+        EP->>M: Metrik Gönder
+        QW->>M: Metrik Gönder
     end
 ```
 
 ### 📈 Veri Akışı
 
 ```
-E-ticaret Event'leri → Kafka → Spark → GPU İşleme → Qdrant Vektör DB
+E-ticaret Olayları → Kafka → Spark → GPU İşleme → Qdrant Vektör DB
 ```
 
 **Detaylı Diyagramlar**: [`docs/diagrams/`](docs/diagrams/) klasöründe bulabilirsiniz.
@@ -154,24 +149,24 @@ E-ticaret Event'leri → Kafka → Spark → GPU İşleme → Qdrant Vektör DB
 
 Detaylı sistem mimarisi diyagramları için: [docs/diagrams/](docs/diagrams/)
 
-## 📈 Performance Sonuçları
+## 📈 Performans Sonuçları
 
 ### ✅ Test Sonuçları
 
 | Metrik | Hedef | Sonuç | Durum |
 |--------|-------|-------|-------|
-| Throughput | 1000+ event/s | 1278.3 event/s | ✅ |
-| Latency | <30 saniye | 3.6s | ✅ |
-| Error Rate | <1% | 0.00% | ✅ |
+| Verim | 1000+ olay/s | 1278.3 olay/s | ✅ |
+| Gecikme | <30 saniye | 3.6s | ✅ |
+| Hata Oranı | <1% | 0.00% | ✅ |
 | GPU Kullanımı | Evet | Apple Silicon MPS | ✅ |
 
 ### 🚀 Özellikler
 
 - **GPU Hızlandırması**: RAPIDS + Apple Silicon MPS
-- **Batch İşleme**: Optimal batch size ile yüksek throughput
-- **Otomatik Fallback**: GPU → CPU geçişi
-- **Performance Monitoring**: Gerçek zamanlı metrikler
-- **Error Handling**: Circuit breaker pattern
+- **Toplu İşleme**: Optimal toplu boyut ile yüksek verim
+- **Otomatik Yedekleme**: GPU → CPU geçişi
+- **Performans İzleme**: Gerçek zamanlı metrikler
+- **Hata İşleme**: Devre kesici deseni
 
 ## 📁 Proje Yapısı
 
@@ -188,31 +183,3 @@ newmind-ai/
 │   └── diagrams/             # Sistem diyagramları
 └── 🔧 config/               # Konfigürasyon
 ```
-
-## 🚀 Hızlı Demo Kurulumu
-
-### 1. Servisleri Başlat
-```bash
-docker-compose up -d
-
-python3.10 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### 2. E-ticaret Demo EVENT Verisi Üret
-```bash
-python scripts/live_event_demo.py --count 10000 --burst
-```
-
-### 3. Eventlerin İşlenmesi İçin Sistemi Çalıştır
-```bash
-python src/main.py
-```
-
-## 🌐 Web Arayüzleri
-
-- **Kafka UI:** `http://localhost:8090` - Kafka mesajlarını görüntüle
-- **Qdrant Dashboard:** `http://localhost:6333/dashboard` - Vektör veritabanı
-- **Grafana:** `http://localhost:3000` - Performans metrikleri (admin/admin123)
-- **Spark UI:** `http://localhost:8080` - Spark cluster durumu

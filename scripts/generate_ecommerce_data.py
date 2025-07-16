@@ -240,7 +240,7 @@ class ECommerceDataGenerator:
             
         except Exception as e:
             print(f"❌ Kafka send error: {e}")
-            print("💡 Make sure Kafka is running: docker-compose up -d")
+            print("💡 Make sure Kafka is running: docker compose up -d")
     
     def stream_to_kafka(self, events_per_second: int = None, duration_seconds: int = 60,
                        topic: str = None, bootstrap_servers: str = None):

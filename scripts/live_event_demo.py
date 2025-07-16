@@ -8,7 +8,7 @@ Drop-in replacement for the original script. 3–5× daha yüksek TPS,
 
 Kullanım:
     # 10 k olayı mümkün olan en hızlı şekilde gönder
-    python live_event_sender_fast.py -c 10000 --burst --no-rate-limit --acks 0 --compression lz4
+    python live_event_sender_fast.py -c 10000 --burst --no-rate-limit  --compression lz4
 """
 from __future__ import annotations
 

@@ -229,7 +229,7 @@ newmind-ai/
 ├── 📦 scripts/                       # Utility scripts
 │   ├── generate_ecommerce_data.py    # Data generation
 │   └── live_event_demo.py            # Demo script
-├── 🐳 docker-compose.yml             # Container orchestration
+├── 🐳 docker compose.yml             # Container orchestration
 ├── 📋 requirements.txt               # Python dependencies
 ├── 🔧 Makefile                       # Build automation
 └── 📊 monitoring/                    # Monitoring configuration
@@ -331,7 +331,7 @@ spark:
   driver_memory: "4g"
   streaming:
     batch_interval: 0.5
-    max_offsets_per_trigger: 50000
+    max_offsets_per_trigger: 100000
 
 embedding:
   model_name: "all-MiniLM-L6-v2"
@@ -414,7 +414,7 @@ performance:
 
 1. **Start Infrastructure**:
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
 
 2. **Generate Test Data**:
@@ -422,12 +422,12 @@ performance:
    python scripts/generate_ecommerce_data.py
    ```
 
-3. **Start Pipeline**:
-   ```bash
-   python src/main.py
-   ```
+3. **Docker Üzerinde Ayağa Kalkan VectorStreamApp Eventleri Otomatik Olarak Consume Edecek**
+    ```bash
+    docker compose logs app -f
+    ```
 
-4. **Monitor Performance**:
+1. **Monitor Performance**:
    - Grafana: http://localhost:3000 (admin/admin123)
    - Kafka UI: http://localhost:8090
    - Qdrant: http://localhost:6333/dashboard
