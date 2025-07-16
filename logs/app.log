@@ -2788,3 +2788,483 @@
 2025-07-15 04:42:48 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for test_service
 2025-07-15 04:42:48 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for test_service
 2025-07-15 04:42:51 | INFO | tests.unit.test_chaos_engineering:run_network_partition_test:222 | Starting network partition test
+2025-07-16 04:34:28 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for kafka
+2025-07-16 04:34:28 | INFO | tests.unit.test_chaos_engineering:recover_service:114 | Service kafka recovered
+2025-07-16 04:34:28 | INFO | tests.unit.test_chaos_engineering:inject_network_timeout:69 | Injecting network timeout: 0.1s delay
+2025-07-16 04:34:29 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for test_service
+2025-07-16 04:34:29 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for test_service
+2025-07-16 04:34:32 | INFO | tests.unit.test_chaos_engineering:run_network_partition_test:222 | Starting network partition test
+2025-07-16 04:35:07 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for kafka
+2025-07-16 04:35:07 | INFO | tests.unit.test_chaos_engineering:recover_service:114 | Service kafka recovered
+2025-07-16 04:35:07 | INFO | tests.unit.test_chaos_engineering:inject_network_timeout:69 | Injecting network timeout: 0.1s delay
+2025-07-16 04:35:08 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for test_service
+2025-07-16 04:35:08 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for test_service
+2025-07-16 04:35:11 | INFO | tests.unit.test_chaos_engineering:run_network_partition_test:222 | Starting network partition test
+2025-07-16 04:35:21 | INFO | tests.unit.test_chaos_engineering:run_resource_exhaustion_test:242 | Starting resource exhaustion test
+2025-07-16 04:35:21 | INFO | tests.unit.test_chaos_engineering:inject_memory_pressure:74 | Injecting memory pressure: 50MB
+2025-07-16 04:35:21 | INFO | tests.unit.test_chaos_engineering:inject_cpu_load:81 | Injecting CPU load for 1s
+2025-07-16 04:35:22 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka' oluşturuldu
+2025-07-16 04:35:22 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'kafka' OPEN durumuna geçti. Sonraki deneme: 60.0 saniye sonra
+2025-07-16 04:35:22 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant' oluşturuldu
+2025-07-16 04:35:22 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'qdrant' OPEN durumuna geçti. Sonraki deneme: 60.0 saniye sonra
+2025-07-16 04:35:23 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for kafka
+2025-07-16 04:35:23 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for kafka
+2025-07-16 04:35:26 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for qdrant
+2025-07-16 04:35:26 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for qdrant
+2025-07-16 04:35:29 | INFO | tests.unit.test_chaos_engineering:run_network_partition_test:222 | Starting network partition test
+2025-07-16 04:35:39 | INFO | tests.unit.test_chaos_engineering:run_resource_exhaustion_test:242 | Starting resource exhaustion test
+2025-07-16 04:35:39 | INFO | tests.unit.test_chaos_engineering:inject_memory_pressure:74 | Injecting memory pressure: 50MB
+2025-07-16 04:35:39 | INFO | tests.unit.test_chaos_engineering:inject_cpu_load:81 | Injecting CPU load for 1s
+2025-07-16 04:35:40 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'test_cb' OPEN durumuna geçti. Sonraki deneme: 1.0 saniye sonra
+2025-07-16 04:35:40 | INFO | src.utils.circuit_breaker:_close_circuit:77 | Circuit breaker 'test_cb' CLOSED durumuna geçti
+2025-07-16 04:35:40 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'test_cb' OPEN durumuna geçti. Sonraki deneme: 1.0 saniye sonra
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:_half_open_circuit:93 | Circuit breaker 'test_cb' HALF_OPEN durumuna geçti
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'test_cb' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'test_cb' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'cb1' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'cb2' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'test_cb' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:_close_circuit:77 | Circuit breaker 'test_cb' CLOSED durumuna geçti
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:reset_circuit_breaker:184 | Circuit breaker 'test_cb' sıfırlandı
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'async_test_decorator' oluşturuldu
+2025-07-16 04:35:41 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'async_test_decorator' OPEN durumuna geçti. Sonraki deneme: 60.0 saniye sonra
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:35:41 | ERROR | src.core.kafka_consumer:_process_messages:142 | JSON parse hatası: unexpected character: line 1 column 1 (char 0)
+2025-07-16 04:35:41 | INFO | src.core.kafka_consumer:_process_messages:160 | 📈 Ortalama hız: 0 msg/s (bulk: 0 events)
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:process_batch:149 | 🎯 Hedef aşıldı → 23087.9 evt/s
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:process_batch:149 | 🎯 Hedef aşıldı → 1615.7 evt/s
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:process_batch:149 | 🎯 Hedef aşıldı → 70295.6 evt/s
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:process_batch:149 | 🎯 Hedef aşıldı → 1499.6 evt/s
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:process_batch:149 | 🎯 Hedef aşıldı → 10485.8 evt/s
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:35:41 | ERROR | src.core.embedding_processor:process_batch:156 | ❌ Batch embedding hatası: Encoding failed
+2025-07-16 04:35:41 | ERROR | src.core.embedding_processor:create_embedding:168 | ❌ Tekil embedding hatası: Encoding failed
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:initialize:48 | 🚀 Sentence-Transformers modeli yükleniyor: sentence-transformers/all-MiniLM-L6-v2
+2025-07-16 04:35:41 | ERROR | src.core.embedding_processor:initialize:81 | ❌ Model yükleme hatası: Model loading failed
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:35:41 | WARNING | src.core.embedding_processor:process_message:221 | Mesajda content yok: test_001
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:process_batch:149 | 🎯 Hedef aşıldı → 29537.4 evt/s
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:35:41 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:35:41 | WARNING | src.core.embedding_processor:process_message:221 | Mesajda content yok: test_001
+2025-07-16 04:35:41 | ERROR | src.monitoring.health_monitor:check_kafka_health:87 | Kafka health check failed: Connection failed
+2025-07-16 04:35:41 | ERROR | src.monitoring.health_monitor:check_qdrant_health:135 | Qdrant health check failed: Connection failed
+2025-07-16 04:35:41 | INFO | src.monitoring.health_monitor:run_all_checks:202 | Running health checks...
+2025-07-16 04:35:41 | INFO | src.monitoring.health_monitor:run_all_checks:202 | Running health checks...
+2025-07-16 04:35:41 | INFO | src.monitoring.health_monitor:run_all_checks:202 | Running health checks...
+2025-07-16 04:35:41 | INFO | src.monitoring.health_monitor:run_all_checks:202 | Running health checks...
+2025-07-16 04:35:41 | INFO | src.utils.metrics:record_health_check_result:326 | Health check - kafka: healthy (0.050s)
+2025-07-16 04:35:41 | INFO | src.spark.optimized_batch_processor:_adjust_batch_size:268 | Adaptive batch size: 1000 -> 1200 (mem: 30.0%, cpu: 20.0%)
+2025-07-16 04:35:41 | INFO | src.spark.optimized_batch_processor:_adjust_batch_size:268 | Adaptive batch size: 1200 -> 1000 (mem: 85.0%, cpu: 70.0%)
+2025-07-16 04:35:41 | INFO | src.spark.optimized_batch_processor:stop:983 | Optimized batch processor durduruluyor...
+2025-07-16 04:35:41 | INFO | src.spark.optimized_batch_processor:stop:997 | ✅ Optimized batch processor durduruldu
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:_initialize_collection_impl:96 | Koleksiyon zaten mevcut: test_embeddings
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:initialize_collection:74 | Koleksiyon başarıyla başlatıldı: test_embeddings
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:_initialize_collection_impl:94 | Koleksiyon oluşturuldu: test_embeddings
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:initialize_collection:74 | Koleksiyon başarıyla başlatıldı: test_embeddings
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:35:41 | ERROR | src.utils.error_handler:async_wrapper:129 | Attempt 1 failed for _search_with_retry: Search error
+2025-07-16 04:35:41 | ERROR | src.utils.error_handler:async_wrapper:132 | Not retrying _search_with_retry due to non-retryable exception or max attempts reached
+2025-07-16 04:35:41 | ERROR | src.core.qdrant_writer:search_similar:206 | Arama hatası: Search error
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:35:41 | ERROR | src.utils.error_handler:async_wrapper:129 | Attempt 1 failed for _write_with_retry: Connection error
+2025-07-16 04:35:41 | ERROR | src.utils.error_handler:async_wrapper:132 | Not retrying _write_with_retry due to non-retryable exception or max attempts reached
+2025-07-16 04:35:41 | ERROR | src.core.qdrant_writer:write_embeddings:122 | Embedding yazma hatası: Connection error
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:write_embeddings:115 | ✅ 2 embedding yazıldı (batch_size=1000)
+2025-07-16 04:35:41 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:35:41 | INFO | src.core.qdrant_writer:write_embeddings:115 | ✅ 1 embedding yazıldı (batch_size=1000)
+2025-07-16 04:35:41 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Connection failed
+2025-07-16 04:35:41 | INFO | src.utils.error_handler:sync_wrapper:108 | Retrying test_func in 0.10s (attempt 2/3)
+2025-07-16 04:35:41 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Always fails
+2025-07-16 04:35:41 | INFO | src.utils.error_handler:sync_wrapper:108 | Retrying test_func in 0.10s (attempt 2/2)
+2025-07-16 04:35:42 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 2 failed for test_func: Always fails
+2025-07-16 04:35:42 | ERROR | src.utils.error_handler:sync_wrapper:103 | Not retrying test_func due to non-retryable exception or max attempts reached
+2025-07-16 04:35:42 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Non-retryable error
+2025-07-16 04:35:42 | ERROR | src.utils.error_handler:sync_wrapper:103 | Not retrying test_func due to non-retryable exception or max attempts reached
+2025-07-16 04:35:42 | ERROR | src.utils.error_handler:async_wrapper:129 | Attempt 1 failed for test_async_func: Connection failed
+2025-07-16 04:35:42 | INFO | src.utils.error_handler:async_wrapper:137 | Retrying test_async_func in 0.10s (attempt 2/3)
+2025-07-16 04:35:42 | ERROR | src.utils.error_handler:async_wrapper:129 | Attempt 1 failed for slow_func: 
+2025-07-16 04:35:42 | INFO | src.utils.error_handler:async_wrapper:137 | Retrying slow_func in 1.00s (attempt 2/2)
+2025-07-16 04:35:43 | ERROR | src.utils.error_handler:async_wrapper:129 | Attempt 2 failed for slow_func: 
+2025-07-16 04:35:43 | ERROR | src.utils.error_handler:async_wrapper:132 | Not retrying slow_func due to non-retryable exception or max attempts reached
+2025-07-16 04:35:43 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Fail once
+2025-07-16 04:35:43 | INFO | src.utils.error_handler:sync_wrapper:108 | Retrying test_func in 0.06s (attempt 2/3)
+2025-07-16 04:35:43 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Network error
+2025-07-16 04:35:43 | INFO | src.utils.error_handler:sync_wrapper:108 | Retrying test_func in 0.78s (attempt 2/3)
+2025-07-16 04:35:44 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Not a network error
+2025-07-16 04:35:44 | ERROR | src.utils.error_handler:sync_wrapper:103 | Not retrying test_func due to non-retryable exception or max attempts reached
+2025-07-16 04:35:44 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Fail twice
+2025-07-16 04:35:44 | INFO | src.utils.error_handler:sync_wrapper:108 | Retrying test_func in 0.10s (attempt 2/3)
+2025-07-16 04:35:44 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 2 failed for test_func: Fail twice
+2025-07-16 04:35:44 | INFO | src.utils.error_handler:sync_wrapper:108 | Retrying test_func in 0.10s (attempt 3/3)
+2025-07-16 04:35:44 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Fail once
+2025-07-16 04:35:44 | INFO | src.utils.error_handler:sync_wrapper:108 | Retrying test_func in 1.00s (attempt 2/3)
+2025-07-16 04:35:45 | WARNING | src.utils.error_handler:wrapper:201 | Using fallback value for test_func due to: Always fails
+2025-07-16 04:38:46 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for kafka
+2025-07-16 04:38:46 | INFO | tests.unit.test_chaos_engineering:recover_service:114 | Service kafka recovered
+2025-07-16 04:38:46 | INFO | tests.unit.test_chaos_engineering:inject_network_timeout:69 | Injecting network timeout: 0.1s delay
+2025-07-16 04:38:46 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for test_service
+2025-07-16 04:38:46 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for test_service
+2025-07-16 04:38:49 | INFO | tests.unit.test_chaos_engineering:run_network_partition_test:222 | Starting network partition test
+2025-07-16 04:38:59 | INFO | tests.unit.test_chaos_engineering:run_resource_exhaustion_test:242 | Starting resource exhaustion test
+2025-07-16 04:38:59 | INFO | tests.unit.test_chaos_engineering:inject_memory_pressure:74 | Injecting memory pressure: 50MB
+2025-07-16 04:38:59 | INFO | tests.unit.test_chaos_engineering:inject_cpu_load:81 | Injecting CPU load for 1s
+2025-07-16 04:39:00 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka' oluşturuldu
+2025-07-16 04:39:00 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'kafka' OPEN durumuna geçti. Sonraki deneme: 60.0 saniye sonra
+2025-07-16 04:39:00 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant' oluşturuldu
+2025-07-16 04:39:00 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'qdrant' OPEN durumuna geçti. Sonraki deneme: 60.0 saniye sonra
+2025-07-16 04:39:01 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for kafka
+2025-07-16 04:39:01 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for kafka
+2025-07-16 04:39:04 | INFO | tests.unit.test_chaos_engineering:run_service_failure_test:180 | Starting service failure test for qdrant
+2025-07-16 04:39:04 | INFO | tests.unit.test_chaos_engineering:inject_service_failure:65 | Injecting service failure for qdrant
+2025-07-16 04:39:07 | INFO | tests.unit.test_chaos_engineering:run_network_partition_test:222 | Starting network partition test
+2025-07-16 04:39:17 | INFO | tests.unit.test_chaos_engineering:run_resource_exhaustion_test:242 | Starting resource exhaustion test
+2025-07-16 04:39:17 | INFO | tests.unit.test_chaos_engineering:inject_memory_pressure:74 | Injecting memory pressure: 50MB
+2025-07-16 04:39:17 | INFO | tests.unit.test_chaos_engineering:inject_cpu_load:81 | Injecting CPU load for 1s
+2025-07-16 04:39:18 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'test_cb' OPEN durumuna geçti. Sonraki deneme: 1.0 saniye sonra
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:_close_circuit:77 | Circuit breaker 'test_cb' CLOSED durumuna geçti
+2025-07-16 04:39:18 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'test_cb' OPEN durumuna geçti. Sonraki deneme: 1.0 saniye sonra
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:_half_open_circuit:93 | Circuit breaker 'test_cb' HALF_OPEN durumuna geçti
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'test_cb' oluşturuldu
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'test_cb' oluşturuldu
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'cb1' oluşturuldu
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'cb2' oluşturuldu
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'test_cb' oluşturuldu
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:_close_circuit:77 | Circuit breaker 'test_cb' CLOSED durumuna geçti
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:reset_circuit_breaker:184 | Circuit breaker 'test_cb' sıfırlandı
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'async_test_decorator' oluşturuldu
+2025-07-16 04:39:18 | WARNING | src.utils.circuit_breaker:_open_circuit:84 | Circuit breaker 'async_test_decorator' OPEN durumuna geçti. Sonraki deneme: 60.0 saniye sonra
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:39:18 | ERROR | src.core.kafka_consumer:_process_messages:142 | JSON parse hatası: unexpected character: line 1 column 1 (char 0)
+2025-07-16 04:39:18 | INFO | src.core.kafka_consumer:_process_messages:160 | 📈 Ortalama hız: 0 msg/s (bulk: 0 events)
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:39:18 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'kafka_consumer_cf' oluşturuldu
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:process_batch:149 | 🎯 Hedef aşıldı → 246723.8 evt/s
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:process_batch:149 | 🎯 Hedef aşıldı → 2519.1 evt/s
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:39:18 | INFO | src.core.embedding_processor:process_batch:149 | 🎯 Hedef aşıldı → 47482.7 evt/s
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:process_batch:149 | 🎯 Hedef aşıldı → 5548.0 evt/s
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:process_batch:149 | 🎯 Hedef aşıldı → 71089.9 evt/s
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:39:19 | ERROR | src.core.embedding_processor:process_batch:156 | ❌ Batch embedding hatası: Encoding failed
+2025-07-16 04:39:19 | ERROR | src.core.embedding_processor:create_embedding:168 | ❌ Tekil embedding hatası: Encoding failed
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:initialize:48 | 🚀 Sentence-Transformers modeli yükleniyor: sentence-transformers/all-MiniLM-L6-v2
+2025-07-16 04:39:19 | ERROR | src.core.embedding_processor:initialize:81 | ❌ Model yükleme hatası: Model loading failed
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:39:19 | WARNING | src.core.embedding_processor:process_message:221 | Mesajda content yok: test_001
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:process_batch:149 | 🎯 Hedef aşıldı → 99864.4 evt/s
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:_get_best_device:40 | ✅ Apple MPS bulundu - M3 Pro optimized, 18k+ sentences/sec hedefleniyor
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:24 | 🚀 High-performance embedding processor başlatılıyor:
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:25 |    📝 Model: sentence-transformers/all-MiniLM-L6-v2 (Sentence Transformers)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:26 |    📏 Vector size: 384
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:27 |    🔥 Device: mps
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:28 |    📦 Batch size: 32 (optimized for M3 Pro)
+2025-07-16 04:39:19 | INFO | src.core.embedding_processor:__init__:29 |    ⚡ FP16: True
+2025-07-16 04:39:19 | WARNING | src.core.embedding_processor:process_message:221 | Mesajda content yok: test_001
+2025-07-16 04:39:19 | ERROR | src.monitoring.health_monitor:check_kafka_health:87 | Kafka health check failed: Connection failed
+2025-07-16 04:39:19 | ERROR | src.monitoring.health_monitor:check_qdrant_health:135 | Qdrant health check failed: Connection failed
+2025-07-16 04:39:19 | INFO | src.monitoring.health_monitor:run_all_checks:202 | Running health checks...
+2025-07-16 04:39:19 | INFO | src.monitoring.health_monitor:run_all_checks:202 | Running health checks...
+2025-07-16 04:39:19 | INFO | src.monitoring.health_monitor:run_all_checks:202 | Running health checks...
+2025-07-16 04:39:19 | INFO | src.monitoring.health_monitor:run_all_checks:202 | Running health checks...
+2025-07-16 04:39:19 | INFO | src.utils.metrics:record_health_check_result:326 | Health check - kafka: healthy (0.050s)
+2025-07-16 04:39:19 | INFO | src.spark.optimized_batch_processor:_adjust_batch_size:268 | Adaptive batch size: 1000 -> 1200 (mem: 30.0%, cpu: 20.0%)
+2025-07-16 04:39:19 | INFO | src.spark.optimized_batch_processor:_adjust_batch_size:268 | Adaptive batch size: 1200 -> 1000 (mem: 85.0%, cpu: 70.0%)
+2025-07-16 04:39:19 | INFO | src.spark.optimized_batch_processor:stop:983 | Optimized batch processor durduruluyor...
+2025-07-16 04:39:19 | INFO | src.spark.optimized_batch_processor:stop:997 | ✅ Optimized batch processor durduruldu
+2025-07-16 04:39:19 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:39:19 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:_initialize_collection_impl:96 | Koleksiyon zaten mevcut: test_embeddings
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:initialize_collection:74 | Koleksiyon başarıyla başlatıldı: test_embeddings
+2025-07-16 04:39:19 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:_initialize_collection_impl:94 | Koleksiyon oluşturuldu: test_embeddings
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:initialize_collection:74 | Koleksiyon başarıyla başlatıldı: test_embeddings
+2025-07-16 04:39:19 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:39:19 | ERROR | src.utils.error_handler:async_wrapper:129 | Attempt 1 failed for _search_with_retry: Search error
+2025-07-16 04:39:19 | ERROR | src.utils.error_handler:async_wrapper:132 | Not retrying _search_with_retry due to non-retryable exception or max attempts reached
+2025-07-16 04:39:19 | ERROR | src.core.qdrant_writer:search_similar:206 | Arama hatası: Search error
+2025-07-16 04:39:19 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:39:19 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:39:19 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:39:19 | ERROR | src.utils.error_handler:async_wrapper:129 | Attempt 1 failed for _write_with_retry: Connection error
+2025-07-16 04:39:19 | ERROR | src.utils.error_handler:async_wrapper:132 | Not retrying _write_with_retry due to non-retryable exception or max attempts reached
+2025-07-16 04:39:19 | ERROR | src.core.qdrant_writer:write_embeddings:122 | Embedding yazma hatası: Connection error
+2025-07-16 04:39:19 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:write_embeddings:115 | ✅ 2 embedding yazıldı (batch_size=1000)
+2025-07-16 04:39:19 | INFO | src.utils.circuit_breaker:create_circuit_breaker:166 | Circuit breaker 'qdrant_writer' oluşturuldu
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:51 | 🚀 High-performance Qdrant Writer yapılandırıldı:
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:52 |    🌐 Host: localhost:6333 (gRPC)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:53 |    📚 Collection: test_embeddings
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:54 |    ⚡ gRPC enabled: True (15-20% lower latency)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:__init__:55 |    🎯 Target: 1200+ RPS (Qdrant optimized)
+2025-07-16 04:39:19 | INFO | src.core.qdrant_writer:write_embeddings:115 | ✅ 1 embedding yazıldı (batch_size=1000)
+2025-07-16 04:39:19 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Connection failed
+2025-07-16 04:39:19 | INFO | src.utils.error_handler:sync_wrapper:108 | Retrying test_func in 0.10s (attempt 2/3)
+2025-07-16 04:39:19 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Always fails
+2025-07-16 04:39:19 | INFO | src.utils.error_handler:sync_wrapper:108 | Retrying test_func in 0.10s (attempt 2/2)
+2025-07-16 04:39:19 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 2 failed for test_func: Always fails
+2025-07-16 04:39:19 | ERROR | src.utils.error_handler:sync_wrapper:103 | Not retrying test_func due to non-retryable exception or max attempts reached
+2025-07-16 04:39:19 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Non-retryable error
+2025-07-16 04:39:19 | ERROR | src.utils.error_handler:sync_wrapper:103 | Not retrying test_func due to non-retryable exception or max attempts reached
+2025-07-16 04:39:19 | ERROR | src.utils.error_handler:async_wrapper:129 | Attempt 1 failed for test_async_func: Connection failed
+2025-07-16 04:39:19 | INFO | src.utils.error_handler:async_wrapper:137 | Retrying test_async_func in 0.10s (attempt 2/3)
+2025-07-16 04:39:19 | ERROR | src.utils.error_handler:async_wrapper:129 | Attempt 1 failed for slow_func: 
+2025-07-16 04:39:19 | INFO | src.utils.error_handler:async_wrapper:137 | Retrying slow_func in 1.00s (attempt 2/2)
+2025-07-16 04:39:20 | ERROR | src.utils.error_handler:async_wrapper:129 | Attempt 2 failed for slow_func: 
+2025-07-16 04:39:20 | ERROR | src.utils.error_handler:async_wrapper:132 | Not retrying slow_func due to non-retryable exception or max attempts reached
+2025-07-16 04:39:20 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Fail once
+2025-07-16 04:39:20 | INFO | src.utils.error_handler:sync_wrapper:108 | Retrying test_func in 0.05s (attempt 2/3)
+2025-07-16 04:39:20 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Network error
+2025-07-16 04:39:20 | INFO | src.utils.error_handler:sync_wrapper:108 | Retrying test_func in 1.00s (attempt 2/3)
+2025-07-16 04:39:21 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Not a network error
+2025-07-16 04:39:21 | ERROR | src.utils.error_handler:sync_wrapper:103 | Not retrying test_func due to non-retryable exception or max attempts reached
+2025-07-16 04:39:21 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Fail twice
+2025-07-16 04:39:21 | INFO | src.utils.error_handler:sync_wrapper:108 | Retrying test_func in 0.10s (attempt 2/3)
+2025-07-16 04:39:22 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 2 failed for test_func: Fail twice
+2025-07-16 04:39:22 | INFO | src.utils.error_handler:sync_wrapper:108 | Retrying test_func in 0.10s (attempt 3/3)
+2025-07-16 04:39:22 | ERROR | src.utils.error_handler:sync_wrapper:100 | Attempt 1 failed for test_func: Fail once
+2025-07-16 04:39:22 | INFO | src.utils.error_handler:sync_wrapper:108 | Retrying test_func in 1.00s (attempt 2/3)
+2025-07-16 04:39:23 | WARNING | src.utils.error_handler:wrapper:201 | Using fallback value for test_func due to: Always fails

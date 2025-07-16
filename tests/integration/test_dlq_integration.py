@@ -445,7 +445,10 @@ class TestDLQEndToEndIntegration(unittest.TestCase):
         kafka_config_dict = self.config['kafka'].copy()
         kafka_config_dict['enable_auto_commit'] = True
         self.kafka_config = KafkaConfig.from_dict(kafka_config_dict)
-        self.qdrant_config = self.config['qdrant']
+        self.qdrant_config = self.config['qdrant'].copy()
+        # Override host for testing
+        self.qdrant_config['host'] = 'localhost'
+        self.qdrant_config['port'] = 6333
         self.qdrant_config['collection_name'] = 'test_dlq_integration'
     
     def tearDown(self):
